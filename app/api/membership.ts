@@ -1,5 +1,6 @@
 import { verifyInitData } from './_lib/telegram-auth';
-import { getSubscription, isActive } from './_lib/store';
+import { getSubscription, setSubscription, isActive } from './_lib/store';
+import { fetchExpiry } from './_lib/tribute';
 
 /**
  * GET/POST /api/membership — tells the Mini App whether this user has an
@@ -36,10 +37,30 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const sub = await getSubscription(check.user.id);
-    return json({
-      isMember: isActive(sub),
-      expiresAt: sub?.expiresAt ?? null,
+    if (isActive(sub)) {
+      return json({ isMember: true, expiresAt: sub?.expiresAt ?? null });
+    }
+
+    // Nothing stored (or it lapsed): ask Tribute before turning them away.
+    // Covers members who paid before this webhook existed, and any event
+    // that never reached us. The subscribers endpoint is not open to every
+    // API key, so treat a failure here as "no answer", not as an outage —
+    // the stored record above is still the authority.
+    const expiresAt = await fetchExpiry(check.user.id).catch((err) => {
+      console.error('tribute lookup failed', err);
+      return null;
     });
+    if (!expiresAt || new Date(expiresAt).getTime() <= Date.now()) {
+      return json({ isMember: false, expiresAt: null });
+    }
+
+    // Cache it so the next open is a single KV read.
+    await setSubscription(check.user.id, {
+      expiresAt,
+      updatedAt: new Date().toISOString(),
+    }).catch((err) => console.error('backfill write failed', err));
+
+    return json({ isMember: true, expiresAt });
   } catch (err) {
     // Storage trouble must not silently grant access.
     console.error('membership lookup failed', err);
