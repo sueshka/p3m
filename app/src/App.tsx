@@ -54,6 +54,8 @@ export default function App() {
   // the stored record has been read.
   const [consented, setConsented] = useState<boolean | null>(null);
   const [isMember, setIsMember] = useState(false);
+  /** ISO date access ends, shown on the purchases sheet. */
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [legalOpen, setLegalOpen] = useState(false);
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [user, setUser] = useState(() => getTelegramUser());
@@ -66,7 +68,9 @@ export default function App() {
 
     let cancelled = false;
     fetchMembership().then((state) => {
-      if (!cancelled) setIsMember(state.status === 'member');
+      if (cancelled) return;
+      setIsMember(state.status === 'member');
+      setExpiresAt(state.status === 'member' ? state.expiresAt : null);
     });
     return () => {
       cancelled = true;
@@ -271,7 +275,9 @@ export default function App() {
         title={sheet ? SHEETS[sheet].title : ''}
         onClose={closeSheet}
       >
-        {sheet === 'purchases' && <PurchasesSheet isMember={isMember} onJoin={join} />}
+        {sheet === 'purchases' && (
+          <PurchasesSheet isMember={isMember} expiresAt={expiresAt} onJoin={join} />
+        )}
         {sheet === 'access' && (
           <AccessSheet
             isMember={isMember}

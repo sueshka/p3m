@@ -40,12 +40,26 @@ function Panel({ title, body }: { title: string; body: string }) {
   );
 }
 
+/** "30 сентября 2026", or null when the date is missing or unparseable. */
+function formatExpiry(iso: string | null): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  // ru-RU appends "г." to a numeric year, which reads oddly in a UI label.
+  return date
+    .toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    .replace(/\s*г\.$/, '');
+}
+
 /** "Мои покупки" — empty until a membership exists. */
 export function PurchasesSheet({
   isMember,
+  expiresAt = null,
   onJoin,
 }: {
   isMember: boolean;
+  /** ISO date access ends; omitted when unknown. */
+  expiresAt?: string | null;
   onJoin: () => void;
 }) {
   const S = SHEETS.purchases;
@@ -87,6 +101,20 @@ export function PurchasesSheet({
         </span>
         <span style={{ fontSize: 16, fontWeight: 700 }}>{S.activeTitle}</span>
         <span style={{ ...bodyText, fontSize: 13.5 }}>{S.activeBody}</span>
+        {formatExpiry(expiresAt) && (
+          <span
+            style={{
+              marginTop: 4,
+              paddingTop: 10,
+              borderTop: `1px solid ${color.surfaceAlt}`,
+              fontSize: 13,
+              fontWeight: 600,
+              color: color.inkSoft,
+            }}
+          >
+            {S.activeUntil} {formatExpiry(expiresAt)}
+          </span>
+        )}
       </div>
     </div>
   );

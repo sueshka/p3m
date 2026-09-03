@@ -177,6 +177,8 @@ export const SHEETS = {
     activeTitle: 'Подписка Pocket Creator',
     activeBody: 'Приватное комьюнити, 3 урока, материалы, разборы и эфиры.',
     activeBadge: 'Активна',
+    /** Precedes the formatted expiry date. */
+    activeUntil: 'Действует до',
   },
   access: {
     title: 'Доступ к комьюнити',
