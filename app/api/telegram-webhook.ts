@@ -22,11 +22,10 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response('Method Not Allowed', { status: 405 });
   }
 
-  // TODO: re-enable secret verification after debugging
-  // const secret = process.env.TELEGRAM_WEBHOOK_SECRET ?? '';
-  // if (secret && req.headers.get('x-telegram-bot-api-secret-token') !== secret) {
-  //   return new Response('forbidden', { status: 403 });
-  // }
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET ?? '';
+  if (secret && req.headers.get('x-telegram-bot-api-secret-token') !== secret) {
+    return new Response('forbidden', { status: 403 });
+  }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   // web_app buttons only accept an https URL to the app itself — a t.me
@@ -46,8 +45,6 @@ export default async function handler(req: Request): Promise<Response> {
 
   const chatId = update.message?.chat?.id;
   const text = update.message?.text ?? '';
-  console.log('telegram-webhook: received', { chatId, text, appUrl });
-
   if (!chatId || !text.startsWith('/start')) {
     return new Response('ok', { status: 200 });
   }
@@ -64,8 +61,10 @@ export default async function handler(req: Request): Promise<Response> {
         },
       }),
     });
-    const resJson = await res.json();
-    console.log('telegram-webhook: sendMessage response', { status: res.status, ok: resJson.ok, result: resJson.result || resJson.error_code });
+    // A rejected sendMessage is otherwise silent: the bot just never answers.
+    if (!res.ok) {
+      console.error('sendMessage rejected', res.status, await res.text());
+    }
   } catch (err) {
     console.error('sendMessage failed', err);
   }
