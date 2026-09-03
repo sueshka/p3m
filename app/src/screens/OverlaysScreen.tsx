@@ -1,6 +1,7 @@
 import { OVERLAYS, OVERLAYS_SCREEN, type Overlay } from '../config/overlays';
 import { color, font, radius, shadow } from '../styles/tokens';
 import { Pressable } from '../components/Pressable';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 interface OverlaysScreenProps {
   onClose: () => void;
@@ -21,40 +22,7 @@ export function OverlaysScreen({ onClose, onOpen }: OverlaysScreenProps) {
         animation: 'pcRise .28s ease both',
       }}
     >
-      <header
-        style={{
-          flex: '0 0 auto',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          borderBottom: '1px solid rgba(12,11,13,0.06)',
-          background: color.white,
-          zIndex: 2,
-        }}
-      >
-        <Pressable
-          onClick={onClose}
-          aria-label="Назад"
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 999,
-            flex: '0 0 auto',
-            background: color.surface,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 17,
-            color: color.ink,
-          }}
-        >
-          ‹
-        </Pressable>
-        <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em' }}>
-          Overlays
-        </span>
-      </header>
+      <ScreenHeader title="Overlays" onBack={onClose} />
 
       <div
         className="pc-scroll"

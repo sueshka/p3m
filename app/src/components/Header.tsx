@@ -1,13 +1,18 @@
 import { APP } from '../config/content';
 import { glass } from '../styles/tokens';
+import { isTelegram } from '../lib/telegram';
 
 /**
  * Glass header holding just the app title.
  *
- * Telegram draws its own Close button and overflow menu in the native
- * chrome above the WebView, so the app does not repeat them here.
+ * Inside Telegram it renders nothing: the client's own chrome already
+ * shows the bot name above the WebView, so this would be a second title
+ * stacked on the first. Outside Telegram — desktop windows and plain
+ * browsers, where that chrome is absent — it is the app's only header.
  */
 export function Header() {
+  if (isTelegram()) return null;
+
   return (
     <header
       style={{

@@ -1,6 +1,6 @@
 import { TUTORIAL, type TutorialBlock } from '../config/tutorial';
 import { color, font, radius } from '../styles/tokens';
-import { Pressable } from '../components/Pressable';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 interface TutorialScreenProps {
   onClose: () => void;
@@ -134,40 +134,7 @@ export function TutorialScreen({ onClose }: TutorialScreenProps) {
         animation: 'pcRise .28s ease both',
       }}
     >
-      <header
-        style={{
-          flex: '0 0 auto',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          borderBottom: '1px solid rgba(12,11,13,0.06)',
-          background: color.white,
-          zIndex: 2,
-        }}
-      >
-        <Pressable
-          onClick={onClose}
-          aria-label="Назад"
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 999,
-            flex: '0 0 auto',
-            background: color.surface,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 17,
-            color: color.ink,
-          }}
-        >
-          ‹
-        </Pressable>
-        <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em' }}>
-          {TUTORIAL.title}
-        </span>
-      </header>
+      <ScreenHeader title={TUTORIAL.title} onBack={onClose} />
 
       <div
         className="pc-scroll"
