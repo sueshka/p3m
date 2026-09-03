@@ -8,7 +8,7 @@ import { getSubscription, isActive } from './_lib/store';
  * The client sends its raw `initData`; the signature is verified here, so
  * the answer cannot be forged by editing the request.
  */
-export const config = { runtime: 'nodejs' };
+export const config = { runtime: 'edge' };
 
 export default async function handler(req: Request): Promise<Response> {
   const json = (body: unknown, status = 200) =>
@@ -29,7 +29,7 @@ export default async function handler(req: Request): Promise<Response> {
     initData = new URL(req.url).searchParams.get('initData') ?? '';
   }
 
-  const check = verifyInitData(initData, process.env.TELEGRAM_BOT_TOKEN ?? '');
+  const check = await verifyInitData(initData, process.env.TELEGRAM_BOT_TOKEN ?? '');
   if (!check.ok) {
     return json({ isMember: false, error: check.reason }, 401);
   }

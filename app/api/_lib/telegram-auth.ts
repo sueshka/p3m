@@ -1,5 +1,3 @@
-import { createHmac } from 'node:crypto';
-
 /**
  * Verifies Telegram's `initData` signature.
  *
@@ -9,6 +7,8 @@ import { createHmac } from 'node:crypto';
  *
  * Algorithm per Telegram docs: secret = HMAC_SHA256("WebAppData", token),
  * then compare HMAC_SHA256(secret, dataCheckString) with the `hash` field.
+ *
+ * Uses Web Crypto so this runs on the Edge runtime.
  */
 export interface TelegramUser {
   id: number;
@@ -19,10 +19,26 @@ export interface TelegramUser {
 
 const MAX_AGE_SECONDS = 24 * 60 * 60;
 
-export function verifyInitData(
+async function hmac(key: ArrayBuffer | string, message: string): Promise<ArrayBuffer> {
+  const raw = typeof key === 'string' ? new TextEncoder().encode(key) : key;
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    raw,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  return crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(message));
+}
+
+function toHex(buf: ArrayBuffer): string {
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function verifyInitData(
   initData: string,
   botToken: string,
-): { ok: true; user: TelegramUser } | { ok: false; reason: string } {
+): Promise<{ ok: true; user: TelegramUser } | { ok: false; reason: string }> {
   if (!initData) return { ok: false, reason: 'missing initData' };
   if (!botToken) return { ok: false, reason: 'server misconfigured' };
 
@@ -36,11 +52,9 @@ export function verifyInitData(
     .sort()
     .join('\n');
 
-  const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
-  const computed = createHmac('sha256', secret).update(dataCheckString).digest('hex');
+  const secret = await hmac('WebAppData', botToken);
+  const computed = toHex(await hmac(secret, dataCheckString));
 
-  // Constant-time-ish compare: lengths are fixed hex, so a plain !== is
-  // acceptable here, but keep the shape explicit.
   if (computed.length !== hash.length || computed !== hash) {
     return { ok: false, reason: 'bad signature' };
   }

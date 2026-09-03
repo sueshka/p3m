@@ -1,4 +1,3 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { setSubscription, clearSubscription } from './_lib/store';
 
 /**
@@ -8,7 +7,7 @@ import { setSubscription, clearSubscription } from './_lib/store';
  * Set the same secret in Tribute's dashboard and in TRIBUTE_WEBHOOK_SECRET,
  * otherwise anyone who finds this URL could grant themselves access.
  */
-export const config = { runtime: 'nodejs' };
+export const config = { runtime: 'edge' };
 
 /** Tribute's payload shape varies by event; only these fields are used. */
 interface TributeEvent {
@@ -25,13 +24,31 @@ interface TributeEvent {
   [k: string]: unknown;
 }
 
-function verifySignature(raw: string, signature: string | null, secret: string): boolean {
-  if (!secret) return false;
-  if (!signature) return false;
-  const expected = createHmac('sha256', secret).update(raw).digest('hex');
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signature.replace(/^sha256=/, ''));
-  return a.length === b.length && timingSafeEqual(a, b);
+async function verifySignature(
+  raw: string,
+  signature: string | null,
+  secret: string,
+): Promise<boolean> {
+  if (!secret || !signature) return false;
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(raw));
+  const expected = [...new Uint8Array(sig)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  const got = signature.replace(/^sha256=/, '');
+  if (expected.length !== got.length) return false;
+  // Constant-time compare so a wrong secret leaks no timing information.
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ got.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -46,10 +63,9 @@ export default async function handler(req: Request): Promise<Response> {
     req.headers.get('x-tribute-signature') ??
     req.headers.get('x-signature');
 
-  // TODO: check Tribute docs for signature verification method
-  // if (!verifySignature(raw, signature, secret)) {
-  //   return new Response('Invalid signature', { status: 401 });
-  // }
+  if (!(await verifySignature(raw, signature, secret))) {
+    return new Response('Invalid signature', { status: 401 });
+  }
 
   let event: TributeEvent;
   try {
