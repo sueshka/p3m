@@ -29,7 +29,9 @@ export default async function handler(req: Request): Promise<Response> {
   // }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const appUrl = process.env.MINI_APP_URL || 'https://t.me/Project3Months_Bot/p3m';
+  // web_app buttons only accept an https URL to the app itself — a t.me
+  // link is rejected with 400.
+  const appUrl = process.env.MINI_APP_URL || 'https://p3m-alpha.vercel.app/';
   if (!token) {
     console.error('telegram-webhook: TELEGRAM_BOT_TOKEN missing');
     return new Response('ok', { status: 200 });
