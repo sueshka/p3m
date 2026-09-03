@@ -16,11 +16,13 @@ export const HOME = {
   greetingSub: 'Съёмка на iPhone, цвет и монтаж',
   /** Members get a greeting that acknowledges they already paid. */
   greetingMember: 'Рады видеть,',
-  greetingSubMember: 'Подписка активна',
   heroEyebrow: 'Pocket Creator',
   heroTitle: 'Твой личный воркфлоу для контента',
   heroSubtitle: 'Один телефон, понятный пайплайн и результат за один вечер',
   heroCta: 'Вступить в комьюнити',
+  /** Hero state for someone who already paid. */
+  heroMemberBadge: 'Подписка активна',
+  heroCtaMember: 'Перейти в комьюнити',
   tickerStrong: 'Blackmagic Camera стоит 0₽',
   tickerMuted: 'всё дело в руках',
 } as const;

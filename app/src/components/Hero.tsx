@@ -4,6 +4,8 @@ import { Logo } from './Logo';
 import { PrimaryCTA } from './PrimaryCTA';
 
 interface HeroProps {
+  /** Members see their status here and a way through to the community. */
+  isMember?: boolean;
   onJoin: () => void;
 }
 
@@ -11,7 +13,7 @@ interface HeroProps {
  * The charcoal hero card: burgundy bloom, glass logo tile, headline and
  * the primary conversion CTA.
  */
-export function Hero({ onJoin }: HeroProps) {
+export function Hero({ isMember = false, onJoin }: HeroProps) {
   return (
     <section
       style={{
@@ -66,6 +68,37 @@ export function Hero({ onJoin }: HeroProps) {
           >
             {HOME.heroEyebrow}
           </span>
+          {isMember && (
+            <span
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 10.5,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: '#FFFFFF',
+                background: 'rgba(255,255,255,0.14)',
+                border: '1px solid rgba(255,255,255,0.22)',
+                padding: '5px 10px',
+                borderRadius: radius.pill,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: '#5FD08A',
+                }}
+              />
+              {HOME.heroMemberBadge}
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -96,7 +129,11 @@ export function Hero({ onJoin }: HeroProps) {
           </p>
         </div>
 
-        <PrimaryCTA label={HOME.heroCta} onClick={onJoin} variant="light" />
+        <PrimaryCTA
+          label={isMember ? HOME.heroCtaMember : HOME.heroCta}
+          onClick={onJoin}
+          variant="light"
+        />
       </div>
     </section>
   );

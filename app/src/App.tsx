@@ -130,7 +130,17 @@ export default function App() {
     setTab(next);
   };
 
-  const join = () => openLink(LINKS.TRIBUTE_PURCHASE_URL);
+  /**
+   * Guests go to Tribute to buy. Members have nothing to buy, so send them
+   * to their account, where the community button lives.
+   */
+  const join = () => {
+    if (isMember) {
+      changeTab('account');
+      return;
+    }
+    openLink(LINKS.TRIBUTE_PURCHASE_URL);
+  };
   const openMaterial = (material: Material) => {
     if (material.id === 'opengate') {
       haptic('light');

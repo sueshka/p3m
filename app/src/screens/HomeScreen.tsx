@@ -71,20 +71,14 @@ export function HomeScreen({
             {isMember ? HOME.greetingMember : HOME.greeting}{' '}
             <span style={{ color: color.faint }}>{greetingName}</span>
           </div>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: isMember ? 600 : 500,
-              color: isMember ? color.burgundy : color.muted,
-            }}
-          >
-            {isMember ? HOME.greetingSubMember : HOME.greetingSub}
+          <div style={{ fontSize: 13, fontWeight: 500, color: color.muted }}>
+            {HOME.greetingSub}
           </div>
         </div>
         <Avatar photoUrl={photoUrl} name={greetingName} size={46} inset={6} />
       </header>
 
-      <Hero onJoin={onJoin} />
+      <Hero isMember={isMember} onJoin={onJoin} />
 
       {/* Pulled up against the hero so the two read as one unit. */}
       <div
