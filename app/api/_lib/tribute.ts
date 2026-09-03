@@ -32,12 +32,20 @@ export async function fetchExpiry(telegramId: number): Promise<string | null> {
   }
 
   const body = (await res.json()) as unknown;
-  // Documented as a bare array; tolerate a wrapped one rather than throwing.
-  const list = (Array.isArray(body) ? body : (body as { data?: unknown }).data) as
+  // Tribute wraps the list in `result`, though its schema shows a bare
+  // array; accept either rather than locking onto one shape.
+  const wrapped = body as { result?: unknown; data?: unknown };
+  const list = (Array.isArray(body) ? body : (wrapped.result ?? wrapped.data)) as
     | Subscriber[]
     | undefined;
   if (!Array.isArray(list)) {
     throw new Error('Tribute API: unexpected shape');
+  }
+
+  // The endpoint takes no paging parameters, so this should be everyone. A
+  // suspiciously round count would mean a hidden cap is hiding subscribers.
+  if (list.length >= 50 && list.length % 50 === 0) {
+    console.warn(`tribute: ${list.length} subscribers — check for a page limit`);
   }
 
   const found = list.find((s) => Number(s.telegramUserId) === telegramId);
