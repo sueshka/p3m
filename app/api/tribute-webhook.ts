@@ -52,6 +52,10 @@ async function verifySignature(
 }
 
 export default async function handler(req: Request): Promise<Response> {
+  // A bare GET is a reachability probe; answering it changes no state.
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return new Response('ok', { status: 200 });
+  }
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
   }
@@ -77,7 +81,10 @@ export default async function handler(req: Request): Promise<Response> {
   const p = event.payload ?? {};
   const telegramId = p.telegram_user_id ?? p.user_id;
   if (!telegramId) {
-    return new Response('No telegram id in payload', { status: 400 });
+    // Tribute's "Test Request" is a signed ping with no user in it. The
+    // signature already proved it is Tribute, so treat it as a health check
+    // rather than an error, or the dashboard reports the webhook as broken.
+    return new Response('ok', { status: 200 });
   }
 
   const name = (event.name ?? event.event ?? '').toLowerCase();
