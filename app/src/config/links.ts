@@ -15,7 +15,8 @@ export const LINKS = {
   OVERLAYS_URL: env.VITE_OVERLAYS_URL ?? 'https://t.me/pocketcreator',
   LUTS_URL: env.VITE_LUTS_URL ?? 'https://t.me/pocketcreator',
   OPEN_GATE_URL: env.VITE_OPEN_GATE_URL ?? 'https://t.me/pocketcreator',
-  SUPPORT_URL: env.VITE_SUPPORT_URL ?? 'https://t.me/pocketcreator',
+  /** Support chat the request form opens, with the text prefilled. */
+  SUPPORT_URL: env.VITE_SUPPORT_URL ?? 'https://t.me/spizegirlz',
   /** Opened by the member-state "Открыть комьюнити" button. */
   COMMUNITY_URL: env.VITE_COMMUNITY_URL ?? 'https://t.me/pocketcreator',
 } as const;

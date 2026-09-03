@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { SHEETS } from '../config/content';
+import { LINKS } from '../config/links';
 import { color, radius } from '../styles/tokens';
-import { haptic } from '../lib/telegram';
+import { openLink } from '../lib/telegram';
 import { PrimaryCTA } from './PrimaryCTA';
 
 const S = SHEETS.support;
@@ -14,9 +15,9 @@ interface SupportFormProps {
 /**
  * Support request form.
  *
- * There is no backend yet, so submitting only shows the success state —
- * the message is not delivered anywhere. Replace `submit` with a real
- * API call before relying on this in production.
+ * A Mini App cannot send a message on the user's behalf, so submitting
+ * opens the support chat with the text prefilled — the user still taps
+ * send there. That keeps delivery working without a backend.
  */
 export function SupportForm({ onDone }: SupportFormProps) {
   const [text, setText] = useState('');
@@ -29,8 +30,11 @@ export function SupportForm({ onDone }: SupportFormProps) {
       return;
     }
     setError('');
-    haptic('medium');
-    // TODO: POST to the support endpoint once a backend exists.
+    // t.me/<user>?text=... opens that chat directly with the draft in the
+    // input box. The share URL is deliberately not used: it would ask the
+    // user to pick a recipient and put the link itself into the message.
+    const url = `${LINKS.SUPPORT_URL}?text=${encodeURIComponent(text.trim())}`;
+    openLink(url);
     setSent(true);
   };
 

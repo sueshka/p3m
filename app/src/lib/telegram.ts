@@ -19,6 +19,8 @@ interface TelegramWebApp {
   ready(): void;
   expand(): void;
   close(): void;
+  /** Raw signed payload — the only form the server will trust. */
+  initData?: string;
   initDataUnsafe?: { user?: TelegramUser };
   themeParams?: Record<string, string>;
   viewportStableHeight?: number;

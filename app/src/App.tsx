@@ -9,6 +9,16 @@ import { AccessSheet, ComingSoonSheet, PurchasesSheet } from './components/Sheet
 import { TutorialScreen } from './screens/TutorialScreen';
 import { OverlaysScreen } from './screens/OverlaysScreen';
 import { LutsScreen } from './screens/LutsScreen';
+import { ConsentScreen } from './screens/ConsentScreen';
+import { LegalScreen } from './screens/LegalScreen';
+import { LEGAL_DOCS, type LegalDoc } from './config/legal';
+import { fetchMembership } from './lib/membership';
+import {
+  hasRequiredConsent,
+  loadConsent,
+  saveConsent,
+  type ConsentPurpose,
+} from './lib/consent';
 import type { Overlay } from './config/overlays';
 import type { Lut } from './config/luts';
 import { Header } from './components/Header';
@@ -25,7 +35,11 @@ import { ACCOUNT } from './config/content';
 import { color } from './styles/tokens';
 
 /** Membership is mocked for v1; wire to a real entitlement check later. */
-const MOCK_IS_MEMBER = false;
+/**
+ * Membership comes from the server (see api/membership.ts). Until it
+ * answers, and whenever it cannot be reached, the user is treated as a
+ * guest — access is never granted on a failure.
+ */
 
 /** Which account row opened the sheet; null means no sheet is open. */
 type SheetId = 'purchases' | 'access' | 'notifications' | 'support' | 'terms';
@@ -36,12 +50,44 @@ export default function App() {
   const [tutorial, setTutorial] = useState(false);
   const [overlays, setOverlays] = useState(false);
   const [luts, setLuts] = useState(false);
+  // Consent gate: null while unknown, so the app never flashes before
+  // the stored record has been read.
+  const [consented, setConsented] = useState<boolean | null>(null);
+  const [isMember, setIsMember] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null);
   const [user, setUser] = useState(() => getTelegramUser());
 
   useEffect(() => {
     initTelegram();
-    setUser(getTelegramUser());
+    const tgUser = getTelegramUser();
+    setUser(tgUser);
+    setConsented(hasRequiredConsent(loadConsent(tgUser?.id)));
+
+    let cancelled = false;
+    fetchMembership().then((state) => {
+      if (!cancelled) setIsMember(state.status === 'member');
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const acceptConsent = (granted: Record<ConsentPurpose, boolean>) => {
+    saveConsent(granted, user?.id);
+    haptic('medium');
+    setConsented(true);
+  };
+
+  const openLegal = (docId?: 'privacy' | 'consent') => {
+    setLegalDoc(docId ? (LEGAL_DOCS.find((d) => d.id === docId) ?? null) : null);
+    setLegalOpen(true);
+  };
+
+  const closeLegal = () => {
+    setLegalOpen(false);
+    setLegalDoc(null);
+  };
 
   const closeSheet = useCallback(() => setSheet(null), []);
 
@@ -54,19 +100,24 @@ export default function App() {
   // leaves the Account tab — matching what the gesture does elsewhere
   // in Telegram.
   const onBack = useCallback(() => {
-    if (tutorial) setTutorial(false);
+    if (legalOpen && legalDoc) setLegalDoc(null);
+    else if (legalOpen) closeLegal();
+    else if (tutorial) setTutorial(false);
     else if (overlays) setOverlays(false);
     else if (luts) setLuts(false);
     else if (sheet !== null) closeSheet();
     else goHome();
-  }, [tutorial, overlays, luts, sheet, closeSheet, goHome]);
+  }, [legalOpen, legalDoc, tutorial, overlays, luts, sheet, closeSheet, goHome]);
 
   // The native Back button returns to Home from Account, matching what a
   // Telegram user expects from the hardware/system gesture.
   useEffect(
     () =>
-      bindBackButton(tab !== 'home' || sheet !== null || tutorial || overlays || luts, onBack),
-    [tab, sheet, tutorial, overlays, luts, onBack],
+      bindBackButton(
+        tab !== 'home' || sheet !== null || tutorial || overlays || luts || legalOpen,
+        onBack,
+      ),
+    [tab, sheet, tutorial, overlays, luts, legalOpen, onBack],
   );
 
   const changeTab = (next: Tab) => {
@@ -114,6 +165,44 @@ export default function App() {
   const userHandle = user?.username ? `@${user.username}` : ACCOUNT.fallbackHandle;
   const greetingName = user?.first_name?.trim() || HOME.greetingFallback;
 
+  // Nothing renders until the stored consent has been read, so the app
+  // never appears for a split second before the gate.
+  if (consented === null) {
+    return <div style={{ height: 'var(--pc-viewport)', background: color.white }} />;
+  }
+
+  if (!consented) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 430,
+          height: 'var(--pc-viewport)',
+          margin: '0 auto',
+          position: 'relative',
+          overflow: 'hidden',
+          background: color.white,
+          color: color.ink,
+          letterSpacing: '-0.01em',
+        }}
+      >
+        <ConsentScreen onAccept={acceptConsent} onOpenDoc={openLegal} />
+        {/* Above the consent screen's own z-index, or it would render
+            underneath and the tap would look like a no-op. */}
+        {legalOpen && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 300 }}>
+            <LegalScreen
+              doc={legalDoc}
+              onSelectDoc={setLegalDoc}
+              onBack={closeLegal}
+              onClose={closeLegal}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -144,10 +233,16 @@ export default function App() {
           userName={userName}
           userHandle={userHandle}
           photoUrl={user?.photo_url}
-          isMember={MOCK_IS_MEMBER}
+          isMember={isMember}
           onJoin={join}
           onOpenCommunity={openCommunity}
-          onSelectRow={(id) => setSheet(id as SheetId)}
+          onSelectRow={(id) => {
+            if (id === 'terms') {
+              openLegal();
+              return;
+            }
+            setSheet(id as SheetId);
+          }}
         />
       )}
 
@@ -161,21 +256,29 @@ export default function App() {
 
       {luts && <LutsScreen onClose={() => setLuts(false)} onOpen={openLutFile} />}
 
+      {legalOpen && (
+        <LegalScreen
+          doc={legalDoc}
+          onSelectDoc={setLegalDoc}
+          onBack={() => setLegalDoc(null)}
+          onClose={closeLegal}
+        />
+      )}
+
       <BottomSheet
         open={sheet !== null}
         title={sheet ? SHEETS[sheet].title : ''}
         onClose={closeSheet}
       >
-        {sheet === 'purchases' && <PurchasesSheet isMember={MOCK_IS_MEMBER} onJoin={join} />}
+        {sheet === 'purchases' && <PurchasesSheet isMember={isMember} onJoin={join} />}
         {sheet === 'access' && (
           <AccessSheet
-            isMember={MOCK_IS_MEMBER}
+            isMember={isMember}
             onJoin={join}
             onOpenCommunity={openCommunity}
           />
         )}
         {sheet === 'notifications' && <ComingSoonSheet which="notifications" />}
-        {sheet === 'terms' && <ComingSoonSheet which="terms" />}
         {sheet === 'support' && <SupportForm onDone={closeSheet} />}
       </BottomSheet>
     </div>
