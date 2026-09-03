@@ -44,12 +44,14 @@ export default async function handler(req: Request): Promise<Response> {
 
   const chatId = update.message?.chat?.id;
   const text = update.message?.text ?? '';
+  console.log('telegram-webhook: received', { chatId, text, appUrl });
+
   if (!chatId || !text.startsWith('/start')) {
     return new Response('ok', { status: 200 });
   }
 
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -60,6 +62,8 @@ export default async function handler(req: Request): Promise<Response> {
         },
       }),
     });
+    const resJson = await res.json();
+    console.log('telegram-webhook: sendMessage response', { status: res.status, ok: resJson.ok, result: resJson.result || resJson.error_code });
   } catch (err) {
     console.error('sendMessage failed', err);
   }
