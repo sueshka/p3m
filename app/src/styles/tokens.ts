@@ -30,6 +30,14 @@ export const color = {
 
   charcoal: '#232027',
   charcoalDeep: '#121014',
+
+  /** "Free" accent — the one green in a burgundy palette, so it reads as
+   *  a status (unlocked, on) rather than a second brand colour. */
+  free: '#3FBF6F',
+  freeInk: '#1E7A45',
+  freeSurface: '#EAF7EF',
+  freeEdge: '#BFE6CD',
+  freeGlow: 'rgba(63,191,111,0.18)',
 } as const;
 
 export const gradient = {

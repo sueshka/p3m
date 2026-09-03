@@ -97,7 +97,7 @@ export interface Material {
 
 export const MATERIALS_SECTION = {
   title: 'Полезные материалы',
-  meta: 'бесплатно',
+  meta: 'Бесплатно',
 } as const;
 
 export const MATERIALS: Material[] = [

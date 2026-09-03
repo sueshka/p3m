@@ -143,7 +143,11 @@ export function HomeScreen({
       <MembershipCard onJoin={onJoin} />
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <SectionHeading title={MATERIALS_SECTION.title} meta={MATERIALS_SECTION.meta} />
+        <SectionHeading
+          title={MATERIALS_SECTION.title}
+          meta={MATERIALS_SECTION.meta}
+          highlightMeta
+        />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {MATERIALS.map((material) => (
             <MaterialCard key={material.id} material={material} onOpen={onOpenMaterial} />
