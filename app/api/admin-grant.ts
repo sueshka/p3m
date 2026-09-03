@@ -49,11 +49,15 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'forbidden' }, 403);
   }
 
+  const raw = await req.text();
+  if (!raw.trim()) {
+    return json({ error: 'empty body — the -d argument did not arrive' }, 400);
+  }
   let body: GrantRequest;
   try {
-    body = (await req.json()) as GrantRequest;
+    body = JSON.parse(raw) as GrantRequest;
   } catch {
-    return json({ error: 'bad json' }, 400);
+    return json({ error: 'bad json', received: raw.slice(0, 200) }, 400);
   }
 
   const telegramId = Number(body.telegramId);
