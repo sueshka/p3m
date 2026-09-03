@@ -1,21 +1,19 @@
 import {
   BENEFITS,
   BENEFITS_SECTION,
-  CLOSING,
   COMPARE,
   HOME,
   MATERIALS,
   MATERIALS_SECTION,
   type Material,
 } from '../config/content';
-import { color, radius } from '../styles/tokens';
+import { color } from '../styles/tokens';
 import { BeforeAfter } from '../components/BeforeAfter';
 import { BenefitRow } from '../components/BenefitRow';
 import { Avatar } from '../components/Avatar';
 import { Hero } from '../components/Hero';
 import { MaterialCard } from '../components/MaterialCard';
 import { MembershipCard } from '../components/MembershipCard';
-import { PrimaryCTA } from '../components/PrimaryCTA';
 import { SectionHeading } from '../components/SectionHeading';
 
 interface HomeScreenProps {
@@ -149,40 +147,6 @@ export function HomeScreen({
         </div>
       </section>
 
-      <section
-        style={{
-          borderRadius: radius['2xl'],
-          background: color.surface,
-          border: '1px solid rgba(12,11,13,0.05)',
-          padding: 20,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.03em' }}>
-          {CLOSING.title}
-        </h2>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 13.5,
-            lineHeight: 1.45,
-            color: color.inkSoft,
-            fontWeight: 500,
-            textWrap: 'pretty',
-          }}
-        >
-          {CLOSING.body}
-        </p>
-        <PrimaryCTA
-          label={CLOSING.cta}
-          onClick={onJoin}
-          variant="burgundy"
-          height={50}
-          fontSize={15.5}
-        />
-      </section>
     </div>
   );
 }

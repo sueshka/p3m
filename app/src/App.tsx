@@ -6,6 +6,11 @@ import { BottomNavigation, type Tab } from './components/BottomNavigation';
 import { BottomSheet } from './components/BottomSheet';
 import { SupportForm } from './components/SupportForm';
 import { AccessSheet, ComingSoonSheet, PurchasesSheet } from './components/SheetStates';
+import { TutorialScreen } from './screens/TutorialScreen';
+import { OverlaysScreen } from './screens/OverlaysScreen';
+import { LutsScreen } from './screens/LutsScreen';
+import type { Overlay } from './config/overlays';
+import type { Lut } from './config/luts';
 import { Header } from './components/Header';
 import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
@@ -28,6 +33,9 @@ type SheetId = 'purchases' | 'access' | 'notifications' | 'support' | 'terms';
 export default function App() {
   const [tab, setTab] = useState<Tab>('home');
   const [sheet, setSheet] = useState<SheetId | null>(null);
+  const [tutorial, setTutorial] = useState(false);
+  const [overlays, setOverlays] = useState(false);
+  const [luts, setLuts] = useState(false);
   const [user, setUser] = useState(() => getTelegramUser());
 
   useEffect(() => {
@@ -46,15 +54,19 @@ export default function App() {
   // leaves the Account tab — matching what the gesture does elsewhere
   // in Telegram.
   const onBack = useCallback(() => {
-    if (sheet !== null) closeSheet();
+    if (tutorial) setTutorial(false);
+    else if (overlays) setOverlays(false);
+    else if (luts) setLuts(false);
+    else if (sheet !== null) closeSheet();
     else goHome();
-  }, [sheet, closeSheet, goHome]);
+  }, [tutorial, overlays, luts, sheet, closeSheet, goHome]);
 
   // The native Back button returns to Home from Account, matching what a
   // Telegram user expects from the hardware/system gesture.
   useEffect(
-    () => bindBackButton(tab !== 'home' || sheet !== null, onBack),
-    [tab, sheet, onBack],
+    () =>
+      bindBackButton(tab !== 'home' || sheet !== null || tutorial || overlays || luts, onBack),
+    [tab, sheet, tutorial, overlays, luts, onBack],
   );
 
   const changeTab = (next: Tab) => {
@@ -64,7 +76,36 @@ export default function App() {
   };
 
   const join = () => openLink(LINKS.TRIBUTE_PURCHASE_URL);
-  const openMaterial = (material: Material) => openLink(material.url);
+  const openMaterial = (material: Material) => {
+    if (material.id === 'opengate') {
+      haptic('light');
+      setTutorial(true);
+      return;
+    }
+    if (material.id === 'overlays') {
+      haptic('light');
+      setOverlays(true);
+      return;
+    }
+    if (material.id === 'luts') {
+      haptic('light');
+      setLuts(true);
+      return;
+    }
+    openLink(material.url);
+  };
+
+  /**
+   * Telegram's WebView blocks in-page downloads, so an overlay is handed
+   * to the external browser, where the viewer can save it normally.
+   */
+  const openOverlayFile = (overlay: Overlay) => {
+    openLink(new URL(overlay.file, window.location.href).href);
+  };
+
+  const openLutFile = (lut: Lut) => {
+    openLink(new URL(lut.file, window.location.href).href);
+  };
   const openCommunity = () => openLink(LINKS.COMMUNITY_URL);
   // Account shows the full name; the Home greeting uses the first name
   // alone so the headline stays on one line.
@@ -111,6 +152,14 @@ export default function App() {
       )}
 
       <BottomNavigation active={tab} onChange={changeTab} />
+
+      {tutorial && <TutorialScreen onClose={() => setTutorial(false)} />}
+
+      {overlays && (
+        <OverlaysScreen onClose={() => setOverlays(false)} onOpen={openOverlayFile} />
+      )}
+
+      {luts && <LutsScreen onClose={() => setLuts(false)} onOpen={openLutFile} />}
 
       <BottomSheet
         open={sheet !== null}

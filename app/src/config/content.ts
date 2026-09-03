@@ -128,12 +128,6 @@ export const MATERIALS: Material[] = [
   },
 ];
 
-export const CLOSING = {
-  title: 'Это только витрина',
-  body: 'Уроки, разборы и эфиры идут внутри приватного Pocket Creator. Там же отвечаю лично.',
-  cta: 'Вступить',
-} as const;
-
 export const ACCOUNT = {
   title: 'Мой аккаунт',
   fallbackName: 'Creator',
