@@ -70,7 +70,11 @@ export default async function handler(req: Request): Promise<Response> {
 }
 
 const START_TEXT =
-  'Pocket Creator — твой личный воркфлоу для контента.\n\n' +
-  'Съёмка на iPhone, цвет и монтаж: уроки, материалы и приватное комьюнити.';
+  'Привет, на связи Sue!\n\n' +
+  'Я собрала приложение, где обычный телефон превращается в инструмент ' +
+  'кинематографичного сторителлинга: съёмка на iPhone, цвет и монтаж.\n\n' +
+  'Overlays, LUTs и туториал по Open Gate — бесплатно, забирай сразу. ' +
+  'А внутри комьюнити ждут 3 урока, разборы и эфиры.\n\n' +
+  'Заходи, кнопка ниже.';
 
-const START_BUTTON = '🎬 Открыть Pocket Creator';
+const START_BUTTON = 'Открыть';
