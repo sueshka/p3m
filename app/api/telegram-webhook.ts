@@ -30,10 +30,9 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const appUrl = process.env.MINI_APP_URL;
-  if (!token || !appUrl) {
-    console.error('telegram-webhook: TELEGRAM_BOT_TOKEN or MINI_APP_URL missing');
-    // 200 so Telegram does not retry a request that cannot succeed.
+  const appUrl = process.env.MINI_APP_URL || 'https://t.me/Project3Months_Bot/p3m';
+  if (!token) {
+    console.error('telegram-webhook: TELEGRAM_BOT_TOKEN missing');
     return new Response('ok', { status: 200 });
   }
 
