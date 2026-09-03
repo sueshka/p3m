@@ -1,0 +1,149 @@
+/* Pocket Creator — global shell.
+   Component-level styling lives with the components; this file covers the
+   document, fonts, scrolling and the two shared keyframes. */
+
+:root {
+  /* Filled in at runtime from Telegram's stable viewport height so the
+     layout survives the keyboard and the collapsing header. */
+  --pc-viewport: 100dvh;
+  --pc-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --pc-safe-top: env(safe-area-inset-top, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #e7e5e6;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: Manrope, 'Helvetica Neue', Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #0c0b0d;
+}
+
+#root {
+  min-height: 100%;
+}
+
+a {
+  color: #8e1b34;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #5e0f22;
+}
+
+/* Hidden scrollbars — the design relies on edge-to-edge content. */
+.pc-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.pc-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Ambient burgundy bloom behind the hero. */
+@keyframes pcGlow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(-10px, 6px, 0) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+}
+
+/* Screen entrance. */
+@keyframes pcRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Press feedback: applied via :active so it works for touch and mouse
+   without any JS state. */
+.pc-press {
+  transition: transform 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pc-press:active {
+  transform: scale(0.97);
+}
+
+.pc-press-subtle {
+  transition: transform 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pc-press-subtle:active {
+  transform: scale(0.985);
+}
+
+/* Interactive elements are real buttons — strip the UA chrome. */
+.pc-reset {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.pc-reset:focus-visible,
+.pc-press:focus-visible {
+  outline: 2px solid #8e1b34;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Bottom sheet entrance. */
+@keyframes pcSheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes pcFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
