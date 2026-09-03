@@ -17,8 +17,8 @@ export const LINKS = {
   OPEN_GATE_URL: env.VITE_OPEN_GATE_URL ?? 'https://t.me/pocketcreator',
   /** Support chat the request form opens, with the text prefilled. */
   SUPPORT_URL: env.VITE_SUPPORT_URL ?? 'https://t.me/spizegirlz',
-  /** Opened by the member-state "Открыть комьюнити" button. */
-  COMMUNITY_URL: env.VITE_COMMUNITY_URL ?? 'https://t.me/pocketcreator',
+  /** Private group invite, opened by the member-state button. */
+  COMMUNITY_URL: env.VITE_COMMUNITY_URL ?? 'https://t.me/+dXA7WR2kck00MTg6',
 } as const;
 
 export type LinkKey = keyof typeof LINKS;

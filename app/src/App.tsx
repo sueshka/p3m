@@ -225,6 +225,7 @@ export default function App() {
         <HomeScreen
           greetingName={greetingName}
           photoUrl={user?.photo_url}
+          isMember={isMember}
           onJoin={join}
           onOpenMaterial={openMaterial}
         />

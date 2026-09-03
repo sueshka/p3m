@@ -14,6 +14,9 @@ export const HOME = {
   /** Shown when Telegram gives us no first name (desktop web, privacy). */
   greetingFallback: 'creator',
   greetingSub: 'Съёмка на iPhone, цвет и монтаж',
+  /** Members get a greeting that acknowledges they already paid. */
+  greetingMember: 'Рады видеть,',
+  greetingSubMember: 'Подписка активна',
   heroEyebrow: 'Pocket Creator',
   heroTitle: 'Твой личный воркфлоу для контента',
   heroSubtitle: 'Один телефон, понятный пайплайн и результат за один вечер',

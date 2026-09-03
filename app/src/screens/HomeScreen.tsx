@@ -20,6 +20,8 @@ interface HomeScreenProps {
   /** Telegram first name, or the fallback when unavailable. */
   greetingName: string;
   photoUrl?: string;
+  /** Members are greeted as members rather than pitched to. */
+  isMember?: boolean;
   onJoin: () => void;
   onOpenMaterial: (material: Material) => void;
 }
@@ -32,6 +34,7 @@ interface HomeScreenProps {
 export function HomeScreen({
   greetingName,
   photoUrl,
+  isMember = false,
   onJoin,
   onOpenMaterial,
 }: HomeScreenProps) {
@@ -65,10 +68,17 @@ export function HomeScreen({
               lineHeight: 1.1,
             }}
           >
-            {HOME.greeting} <span style={{ color: color.faint }}>{greetingName}</span>
+            {isMember ? HOME.greetingMember : HOME.greeting}{' '}
+            <span style={{ color: color.faint }}>{greetingName}</span>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: color.muted }}>
-            {HOME.greetingSub}
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: isMember ? 600 : 500,
+              color: isMember ? color.burgundy : color.muted,
+            }}
+          >
+            {isMember ? HOME.greetingSubMember : HOME.greetingSub}
           </div>
         </div>
         <Avatar photoUrl={photoUrl} name={greetingName} size={46} inset={6} />
