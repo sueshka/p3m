@@ -7,5 +7,5 @@ tsconfig.tsbuildinfo
 .env
 .env.local
 .env*.local
-.SECURITY-REVIEW.md
+SECURITY-REVIEW.md
 
