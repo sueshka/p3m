@@ -4,6 +4,11 @@ import { setSubscription, clearSubscription } from './_lib/store';
  * POST /api/tribute-webhook — Tribute calls this when a subscription is
  * created, renewed or cancelled.
  *
+ * Every one of those events carries `expires_at`, so all three are stored
+ * the same way: write the date and let access lapse when it arrives. A
+ * cancellation only stops the next renewal; the time already paid for is
+ * still the member's.
+ *
  * Set the same secret in Tribute's dashboard and in TRIBUTE_WEBHOOK_SECRET,
  * otherwise anyone who finds this URL could grant themselves access.
  */
@@ -92,19 +97,29 @@ export default async function handler(req: Request): Promise<Response> {
     name.includes('cancel') || name.includes('expired') || p.status === 'cancelled';
 
   try {
-    if (cancelled) {
+    const expiresAt = p.expires_at ?? p.period_end;
+
+    // A cancellation is not an eviction: Tribute's `expires_at` marks the end
+    // of the period the member already paid for, so store that date and let
+    // it lapse on its own. Deleting the record here would cut access short,
+    // and would rely on the /subscribers fallback to undo the mistake on the
+    // next app open — which fails if the API key is ever unavailable.
+    if (cancelled && !expiresAt) {
+      // No date to fall back on, so honouring the paid time is impossible.
       await clearSubscription(telegramId);
-    } else {
-      const expiresAt = p.expires_at ?? p.period_end;
-      if (!expiresAt) {
-        return new Response('No expiry in payload', { status: 400 });
-      }
-      await setSubscription(telegramId, {
-        expiresAt,
-        orderId: p.subscription_id ? String(p.subscription_id) : undefined,
-        updatedAt: new Date().toISOString(),
-      });
+      console.warn(`tribute: cancellation for ${telegramId} had no expiry — access revoked now`);
+      return new Response('ok', { status: 200 });
     }
+
+    if (!expiresAt) {
+      return new Response('No expiry in payload', { status: 400 });
+    }
+
+    await setSubscription(telegramId, {
+      expiresAt,
+      orderId: p.subscription_id ? String(p.subscription_id) : undefined,
+      updatedAt: new Date().toISOString(),
+    });
     return new Response('ok', { status: 200 });
   } catch (err) {
     console.error('webhook store failed', err);
