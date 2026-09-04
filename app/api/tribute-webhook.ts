@@ -115,6 +115,13 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response('No expiry in payload', { status: 400 });
     }
 
+    // Guard against a malformed date reaching storage, matching admin-grant.
+    // A NaN expiry would fail isActive() and deny access, so this fails safe
+    // either way; rejecting outright keeps junk out of KV.
+    if (Number.isNaN(new Date(expiresAt).getTime())) {
+      return new Response('Bad expiry in payload', { status: 400 });
+    }
+
     await setSubscription(telegramId, {
       expiresAt,
       orderId: p.subscription_id ? String(p.subscription_id) : undefined,

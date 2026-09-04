@@ -22,8 +22,10 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response('Method Not Allowed', { status: 405 });
   }
 
+  // Fail closed, matching the tribute and admin verifiers: an unset secret
+  // must reject rather than wave everyone through.
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET ?? '';
-  if (secret && req.headers.get('x-telegram-bot-api-secret-token') !== secret) {
+  if (!secret || req.headers.get('x-telegram-bot-api-secret-token') !== secret) {
     return new Response('forbidden', { status: 403 });
   }
 
