@@ -143,6 +143,16 @@ export const ACCOUNT = {
     body: 'Уроки, LUTs, разборы и эфиры откроются сразу после вступления.',
     cta: 'Вступить',
   },
+  /**
+   * Shown when the server could not reach Tribute. Never says the user is
+   * not a member — we do not know that — and offers a retry, not a payment.
+   */
+  unverified: {
+    badge: 'Доступ',
+    title: 'Не удалось проверить доступ',
+    body: 'Если ты уже оплатил подписку, попробуй ещё раз через минуту или напиши в поддержку.',
+    cta: 'Проверить ещё раз',
+  },
   active: {
     badge: 'Доступ активен',
     title: 'Ты в Pocket Creator',

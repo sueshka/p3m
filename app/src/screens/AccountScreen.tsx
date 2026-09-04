@@ -10,15 +10,22 @@ interface AccountScreenProps {
   userName: string;
   userHandle: string;
   photoUrl?: string;
-  /** Mocked for v1 — swap for a real entitlement check later. */
+  /** Resolved server-side from Tribute (see api/membership.ts). */
   isMember: boolean;
+  /** Server could not verify entitlement; show the retry copy, not the wall. */
+  checkFailed?: boolean;
   onJoin: () => void;
+  onRetryCheck?: () => void;
   onOpenCommunity: () => void;
   onSelectRow: (id: string) => void;
 }
 
-/** Locked state: membership not yet purchased. */
-function LockedCard({ onJoin }: { onJoin: () => void }) {
+/**
+ * Locked state. `unverified` swaps the copy for the case where the check
+ * itself failed, so a paying member is never told they have not joined.
+ */
+function LockedCard({ onJoin, unverified }: { onJoin: () => void; unverified?: boolean }) {
+  const copy = unverified ? ACCOUNT.unverified : ACCOUNT.locked;
   return (
     <section
       style={{
@@ -46,7 +53,7 @@ function LockedCard({ onJoin }: { onJoin: () => void }) {
         }}
       />
       <GlassBadge style={{ position: 'relative', alignSelf: 'flex-start' }}>
-        {ACCOUNT.locked.badge}
+        {copy.badge}
       </GlassBadge>
       <h2
         style={{
@@ -59,7 +66,7 @@ function LockedCard({ onJoin }: { onJoin: () => void }) {
           lineHeight: 1.25,
         }}
       >
-        {ACCOUNT.locked.title}
+        {copy.title}
       </h2>
       <p
         style={{
@@ -71,10 +78,10 @@ function LockedCard({ onJoin }: { onJoin: () => void }) {
           lineHeight: 1.45,
         }}
       >
-        {ACCOUNT.locked.body}
+        {copy.body}
       </p>
       <PrimaryCTA
-        label={ACCOUNT.locked.cta}
+        label={copy.cta}
         onClick={onJoin}
         variant="light"
         height={50}
@@ -172,7 +179,9 @@ export function AccountScreen({
   userHandle,
   photoUrl,
   isMember,
+  checkFailed,
   onJoin,
+  onRetryCheck,
   onOpenCommunity,
   onSelectRow,
 }: AccountScreenProps) {
@@ -224,7 +233,14 @@ export function AccountScreen({
         </div>
       </section>
 
-      {isMember ? <ActiveCard onOpenCommunity={onOpenCommunity} /> : <LockedCard onJoin={onJoin} />}
+      {isMember ? (
+        <ActiveCard onOpenCommunity={onOpenCommunity} />
+      ) : (
+        <LockedCard
+          unverified={checkFailed}
+          onJoin={checkFailed && onRetryCheck ? onRetryCheck : onJoin}
+        />
+      )}
 
       {ACCOUNT.groups.map((group) => (
         <AccountList

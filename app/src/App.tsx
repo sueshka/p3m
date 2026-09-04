@@ -34,7 +34,6 @@ import {
 import { ACCOUNT } from './config/content';
 import { color } from './styles/tokens';
 
-/** Membership is mocked for v1; wire to a real entitlement check later. */
 /**
  * Membership comes from the server (see api/membership.ts). Until it
  * answers, and whenever it cannot be reached, the user is treated as a
@@ -54,6 +53,12 @@ export default function App() {
   // the stored record has been read.
   const [consented, setConsented] = useState<boolean | null>(null);
   const [isMember, setIsMember] = useState(false);
+  /**
+   * True when the server could not verify with Tribute. Access stays denied,
+   * but the UI says "could not check" instead of accusing a paying member of
+   * not having joined.
+   */
+  const [checkFailed, setCheckFailed] = useState(false);
   /** ISO date access ends, shown on the purchases sheet. */
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [legalOpen, setLegalOpen] = useState(false);
@@ -71,11 +76,22 @@ export default function App() {
       if (cancelled) return;
       setIsMember(state.status === 'member');
       setExpiresAt(state.status === 'member' ? state.expiresAt : null);
+      setCheckFailed(state.status === 'unknown');
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  /** Re-run the entitlement check after a failed verification. */
+  const retryMembership = async () => {
+    haptic('medium');
+    setCheckFailed(false);
+    const state = await fetchMembership();
+    setIsMember(state.status === 'member');
+    setExpiresAt(state.status === 'member' ? state.expiresAt : null);
+    setCheckFailed(state.status === 'unknown');
+  };
 
   const acceptConsent = (granted: Record<ConsentPurpose, boolean>) => {
     saveConsent(granted, user?.id);
@@ -249,7 +265,9 @@ export default function App() {
           userHandle={userHandle}
           photoUrl={user?.photo_url}
           isMember={isMember}
+          checkFailed={checkFailed}
           onJoin={join}
+          onRetryCheck={retryMembership}
           onOpenCommunity={openCommunity}
           onSelectRow={(id) => {
             if (id === 'terms') {

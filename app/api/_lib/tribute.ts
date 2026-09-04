@@ -21,7 +21,12 @@ interface Subscriber {
  */
 export async function fetchExpiry(telegramId: number): Promise<string | null> {
   const key = process.env.TRIBUTE_API_KEY;
-  if (!key) return null;
+  // Without a key this check cannot run at all. That is a deployment fault,
+  // not a verdict on the user — throwing keeps it out of the "did not pay"
+  // bucket and puts the cause in the logs.
+  if (!key) {
+    throw new Error('TRIBUTE_API_KEY is not set — cannot verify pre-existing members');
+  }
 
   const res = await fetch(API, {
     headers: { 'Api-Key': key },
@@ -32,8 +37,8 @@ export async function fetchExpiry(telegramId: number): Promise<string | null> {
   }
 
   const body = (await res.json()) as unknown;
-  // Tribute wraps the list in `result`, though its schema shows a bare
-  // array; accept either rather than locking onto one shape.
+  // The spec returns a bare array; accept a `result`/`data` wrapper too
+  // rather than locking onto one shape.
   const wrapped = body as { result?: unknown; data?: unknown };
   const list = (Array.isArray(body) ? body : (wrapped.result ?? wrapped.data)) as
     | Subscriber[]
@@ -53,3 +58,9 @@ export async function fetchExpiry(telegramId: number): Promise<string | null> {
   if (!found || found.status === 'cancelled') return null;
   return found.expireAt ?? null;
 }
+
+// Note: Tribute also documents GET /subscription/{userId}/check, which would
+// be a natural second opinion for a user missing from the list above. Do not
+// use it — this project's API key gets "Access denied" from it, so it would
+// throw for every non-member and turn the join wall into an error page.
+// /subscribers is the only subscriber endpoint the key can actually read.

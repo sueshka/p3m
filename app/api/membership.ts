@@ -43,14 +43,23 @@ export default async function handler(req: Request): Promise<Response> {
 
     // Nothing stored (or it lapsed): ask Tribute before turning them away.
     // Covers members who paid before this webhook existed, and any event
-    // that never reached us. The subscribers endpoint is not open to every
-    // API key, so treat a failure here as "no answer", not as an outage —
-    // the stored record above is still the authority.
-    const expiresAt = await fetchExpiry(check.user.id).catch((err) => {
+    // that never reached us.
+    let expiresAt: string | null = null;
+    let lookupFailed = false;
+    try {
+      expiresAt = await fetchExpiry(check.user.id);
+    } catch (err) {
+      // Tribute unreachable or misconfigured. Distinguish this from a
+      // confirmed "did not pay" so a paying member is not shown the
+      // join wall because of our own outage.
       console.error('tribute lookup failed', err);
-      return null;
-    });
+      lookupFailed = true;
+    }
+
     if (!expiresAt || new Date(expiresAt).getTime() <= Date.now()) {
+      if (lookupFailed) {
+        return json({ isMember: false, error: 'verification unavailable' }, 503);
+      }
       return json({ isMember: false, expiresAt: null });
     }
 
