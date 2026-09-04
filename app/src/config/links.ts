@@ -18,7 +18,7 @@ export const LINKS = {
   /** Support chat the request form opens, with the text prefilled. */
   SUPPORT_URL: env.VITE_SUPPORT_URL ?? 'https://t.me/spizegirlz',
   /** Private group invite, opened by the member-state button. */
-  COMMUNITY_URL: env.VITE_COMMUNITY_URL ?? 'https://t.me/+dXA7WR2kck00MTg6',
+  COMMUNITY_URL: env.VITE_COMMUNITY_URL ?? 'https://t.me/+VU93FWg3mrY1MmQy',
 } as const;
 
 export type LinkKey = keyof typeof LINKS;
