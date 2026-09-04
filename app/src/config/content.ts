@@ -30,32 +30,40 @@ export const HOME = {
 export interface Benefit {
   title: string;
   body: string;
+  /** Square cover, relative to the app root. */
+  image: string;
 }
 
 export const BENEFITS: Benefit[] = [
   {
     title: 'Три простых урока',
     body: 'Настройки Blackmagic, Сам себе оператор + Свет, Лут и Экспорт',
+    image: 'assets/whatsinside/threeclasses.jpg',
   },
   {
     title: 'GRADA LUT',
     body: 'Мой фирменный Лут который я использую в каждом видео',
+    image: 'assets/whatsinside/gradalut.jpg',
   },
   {
     title: 'Обучение по монтажу',
     body: 'Научись базе CapCut а также продвинутым эффектам, цепляющим глаз',
+    image: 'assets/whatsinside/editing.jpg',
   },
   {
     title: 'Комьюнити',
     body: 'Общайся с творческими ребятами как ты и делись опытом. Получай фидбэк!',
+    image: 'assets/whatsinside/community.jpg',
   },
   {
     title: 'Полезные материалы',
     body: 'Звуковые эффекты, секретные шрифты и оверлеи',
+    image: 'assets/whatsinside/materials.jpg',
   },
   {
     title: 'Разборы на прямых эфирах',
     body: 'Смотрю твои ролики по пунктам: цвет, ритм и звук. Собираемся вместе',
+    image: 'assets/whatsinside/live.jpg',
   },
 ];
 
