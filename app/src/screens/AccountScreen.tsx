@@ -257,10 +257,13 @@ export function AccountScreen({
           textAlign: 'center',
           fontFamily: font.mono,
           fontSize: 10.5,
+          lineHeight: 1.7,
           color: color.hairline,
         }}
       >
         {APP.version}
+        <br />
+        {APP.credit}
       </p>
 
     </div>

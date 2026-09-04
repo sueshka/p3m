@@ -7,6 +7,7 @@ import { LINKS } from './links';
 export const APP = {
   title: 'Pocket Creator',
   version: 'Pocket Creator · v1.0',
+  credit: 'developed by spizegirlz',
 } as const;
 
 export const HOME = {
