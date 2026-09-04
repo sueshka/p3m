@@ -20,6 +20,18 @@ interface Subscriber {
  * mistaken for "did not pay".
  */
 export async function fetchExpiry(telegramId: number): Promise<string | null> {
+  const list = await fetchSubscribers();
+  const found = list.find((s) => Number(s.telegramUserId) === telegramId);
+  // `pre_cancelled` still has paid time left, so honour expireAt for it too.
+  if (!found || found.status === 'cancelled') return null;
+  return found.expireAt ?? null;
+}
+
+/**
+ * The whole subscriber list, straight from Tribute. Used to backfill KV for
+ * everyone who paid before the webhook existed.
+ */
+export async function fetchSubscribers(): Promise<Subscriber[]> {
   const key = process.env.TRIBUTE_API_KEY;
   // Without a key this check cannot run at all. That is a deployment fault,
   // not a verdict on the user — throwing keeps it out of the "did not pay"
@@ -53,10 +65,7 @@ export async function fetchExpiry(telegramId: number): Promise<string | null> {
     console.warn(`tribute: ${list.length} subscribers — check for a page limit`);
   }
 
-  const found = list.find((s) => Number(s.telegramUserId) === telegramId);
-  // `pre_cancelled` still has paid time left, so honour expireAt for it too.
-  if (!found || found.status === 'cancelled') return null;
-  return found.expireAt ?? null;
+  return list;
 }
 
 // Note: Tribute also documents GET /subscription/{userId}/check, which would
