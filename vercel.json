@@ -18,10 +18,6 @@
       "source": "/assets/overlays/:file",
       "headers": [
         {
-          "key": "Content-Disposition",
-          "value": "attachment; filename=\":file\""
-        },
-        {
           "key": "Access-Control-Allow-Origin",
           "value": "https://web.telegram.org"
         }

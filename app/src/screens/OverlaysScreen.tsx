@@ -1,5 +1,6 @@
 import { OVERLAYS, OVERLAYS_SCREEN, type Overlay } from '../config/overlays';
 import { color, font, radius, shadow } from '../styles/tokens';
+import { OverlayPreview } from '../components/OverlayPreview';
 import { Pressable } from '../components/Pressable';
 import { ScreenHeader } from '../components/ScreenHeader';
 
@@ -121,17 +122,7 @@ export function OverlaysScreen({ onClose, onOpen }: OverlaysScreenProps) {
                   background: color.ink,
                 }}
               >
-                <img
-                  src={overlay.thumb}
-                  alt=""
-                  loading="lazy"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    display: 'block',
-                  }}
-                />
+                <OverlayPreview src={overlay.file} poster={overlay.thumb} />
                 <span
                   aria-hidden
                   style={{
@@ -149,16 +140,17 @@ export function OverlaysScreen({ onClose, onOpen }: OverlaysScreenProps) {
                     justifyContent: 'center',
                   }}
                 >
-                  <span
-                    style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: `8px solid ${color.ink}`,
-                      borderTop: '5px solid transparent',
-                      borderBottom: '5px solid transparent',
-                      marginLeft: 2,
-                    }}
-                  />
+                  {/* Download, not play: the clip already loops on its own,
+                      and a tap saves the file. */}
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16"
+                      stroke={color.ink}
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </span>
               </span>
 
