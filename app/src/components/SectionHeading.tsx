@@ -2,7 +2,7 @@ import { color, radius } from '../styles/tokens';
 
 interface SectionHeadingProps {
   title: string;
-  /** Small right-aligned label, e.g. "5 блоков". */
+  /** Small right-aligned label, e.g. "Бесплатно". */
   meta?: string;
   /**
    * Renders the meta as a green pill instead of muted text, for a label

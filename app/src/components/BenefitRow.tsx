@@ -1,39 +1,38 @@
 import type { Benefit } from '../config/content';
-import { color, font, radius } from '../styles/tokens';
+import { color, radius } from '../styles/tokens';
 
-/** One numbered row in the "Что внутри комьюнити" list. */
-export function BenefitRow({ index, title, body }: Benefit) {
+/**
+ * One tile in the "Что внутри" grid — two per row, like a delivery-app
+ * storefront. Equal heights come from the grid stretching each cell, so
+ * a longer body never leaves its neighbour short.
+ */
+export function BenefitRow({ title, body }: Benefit) {
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: '40px 1fr',
-        gap: 14,
-        alignItems: 'start',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
         background: color.surface,
         borderRadius: radius.lg,
         padding: 16,
       }}
     >
+      <span style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.25, textWrap: 'pretty' }}>
+        {title}
+      </span>
       <span
         style={{
-          fontFamily: font.mono,
-          fontSize: 13,
+          fontSize: 12.5,
+          lineHeight: 1.4,
+          color: color.inkSoft,
           fontWeight: 500,
-          color: color.burgundy,
-          paddingTop: 2,
+          textWrap: 'pretty',
         }}
       >
-        {index}
+        {body}
       </span>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span style={{ fontSize: 15, fontWeight: 700 }}>{title}</span>
-        <span
-          style={{ fontSize: 13, lineHeight: 1.4, color: color.inkSoft, fontWeight: 500 }}
-        >
-          {body}
-        </span>
-      </div>
     </div>
   );
 }

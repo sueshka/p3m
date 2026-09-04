@@ -95,27 +95,33 @@ export function HomeScreen({
       >
         <span
           style={{
-            width: 7,
-            height: 7,
+            width: 8,
+            height: 8,
             borderRadius: 999,
             flex: '0 0 auto',
             alignSelf: 'center',
             background: color.burgundy,
           }}
         />
-        <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>
+        <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em' }}>
           {HOME.tickerStrong}
         </span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: color.faint }}>
+        <span style={{ fontSize: 15.5, fontWeight: 500, color: color.faint }}>
           {HOME.tickerMuted}
         </span>
       </div>
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <SectionHeading title={BENEFITS_SECTION.title} meta={BENEFITS_SECTION.meta} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <SectionHeading title={BENEFITS_SECTION.title} />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gap: 8,
+          }}
+        >
           {BENEFITS.map((benefit) => (
-            <BenefitRow key={benefit.index} {...benefit} />
+            <BenefitRow key={benefit.title} {...benefit} />
           ))}
         </div>
       </section>

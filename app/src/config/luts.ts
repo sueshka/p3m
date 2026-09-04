@@ -22,7 +22,7 @@ export const LUTS_SCREEN = {
   category: 'Free LUTs · 9 штук',
   title: 'Мои рабочие LUTs',
   lead: 'Тот же цвет, что в моих роликах. Файлы .cube ставятся в Blackmagic Camera, DaVinci Resolve и Premiere Pro. Как импортировать в камеру, разобрано в туториале Open Gate.',
-  hint: 'Тап по LUT откроет файл в браузере: оттуда сохраняешь его на телефон.',
+  hint: 'Тап по LUT — и файл сохраняется на телефон.',
   previewNote: 'Превью: один и тот же кадр под каждым LUT. На материале в Apple Log цвет будет чище.',
 } as const;
 

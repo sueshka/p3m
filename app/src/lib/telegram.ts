@@ -37,6 +37,11 @@ interface TelegramWebApp {
   };
   openLink?(url: string, options?: { try_instant_view?: boolean }): void;
   openTelegramLink?(url: string): void;
+  /** Bot API 8.0+. Saves a file without leaving the mini app. */
+  downloadFile?(
+    params: { url: string; file_name: string },
+    callback?: (accepted: boolean) => void,
+  ): void;
   setHeaderColor?(color: string): void;
   setBackgroundColor?(color: string): void;
   onEvent?(event: string, cb: () => void): void;
@@ -83,6 +88,32 @@ export function openLink(url: string): void {
   }
   window.open(url, '_blank', 'noopener,noreferrer');
 }
+
+/**
+ * Saves a file to the device from inside the mini app.
+ *
+ * `downloadFile` (Bot API 8.0) shows Telegram's own save prompt and keeps
+ * the user in the app. Older clients do not have it, so those fall back to
+ * `openLink`, which hands off to the browser as before — degraded, but
+ * never a dead end.
+ *
+ * Returns true when the native path was used, so callers can tailor the
+ * hint they show.
+ */
+export function downloadFile(url: string, fileName: string): boolean {
+  const app = tg();
+  if (app?.downloadFile) {
+    haptic('medium');
+    app.downloadFile({ url, file_name: fileName });
+    return true;
+  }
+  // openLink fires its own haptic.
+  openLink(url);
+  return false;
+}
+
+/** True when this client can save files without leaving the app. */
+export const canDownloadInApp = (): boolean => Boolean(tg()?.downloadFile);
 
 /** Called once on mount: signals readiness and expands to full height. */
 export function initTelegram(): void {

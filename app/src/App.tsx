@@ -30,6 +30,7 @@ import {
   haptic,
   initTelegram,
   openLink,
+  downloadFile,
 } from './lib/telegram';
 import { ACCOUNT } from './config/content';
 import { color } from './styles/tokens';
@@ -180,13 +181,14 @@ export default function App() {
    * Telegram's WebView blocks in-page downloads, so an overlay is handed
    * to the external browser, where the viewer can save it normally.
    */
-  const openOverlayFile = (overlay: Overlay) => {
-    openLink(new URL(overlay.file, window.location.href).href);
+  /** Saves an asset in-app where Telegram supports it (Bot API 8.0+). */
+  const saveAsset = (path: string) => {
+    const url = new URL(path, window.location.href).href;
+    downloadFile(url, path.split('/').pop() || 'file');
   };
 
-  const openLutFile = (lut: Lut) => {
-    openLink(new URL(lut.file, window.location.href).href);
-  };
+  const openOverlayFile = (overlay: Overlay) => saveAsset(overlay.file);
+  const openLutFile = (lut: Lut) => saveAsset(lut.file);
   const openCommunity = () => openLink(LINKS.COMMUNITY_URL);
   // Account shows the full name; the Home greeting uses the first name
   // alone so the headline stays on one line.

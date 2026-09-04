@@ -1,3 +1,31 @@
 {
-  "framework": null
+  "framework": null,
+  "headers": [
+    {
+      "source": "/assets/luts/(?<file>.*)",
+      "headers": [
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"$file\""
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://web.telegram.org"
+        }
+      ]
+    },
+    {
+      "source": "/assets/overlays/(?<file>.*)",
+      "headers": [
+        {
+          "key": "Content-Disposition",
+          "value": "attachment; filename=\"$file\""
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://web.telegram.org"
+        }
+      ]
+    }
+  ]
 }

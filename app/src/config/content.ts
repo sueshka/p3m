@@ -19,7 +19,7 @@ export const HOME = {
   heroEyebrow: 'Pocket Creator',
   heroTitle: 'Твой личный воркфлоу для контента',
   heroSubtitle: 'Один телефон, понятный пайплайн и результат за один вечер',
-  heroCta: 'Вступить в комьюнити',
+  heroCta: 'Вступить',
   /** Hero state for someone who already paid. */
   heroMemberBadge: 'Подписка активна',
   heroCtaMember: 'Перейти в комьюнити',
@@ -28,42 +28,39 @@ export const HOME = {
 } as const;
 
 export interface Benefit {
-  index: string;
   title: string;
   body: string;
 }
 
 export const BENEFITS: Benefit[] = [
   {
-    index: '01',
-    title: '3 урока',
-    body: 'Свет, движение камеры и цвет от первого кадра до экспорта.',
+    title: 'Три простых урока',
+    body: 'Настройки Blackmagic, Сам себе оператор + Свет, Лут и Экспорт',
   },
   {
-    index: '02',
-    title: 'Приватное комьюнити',
-    body: 'Кидаешь черновик и получаешь честный фидбек, а не лайки.',
+    title: 'GRADA LUT',
+    body: 'Мой фирменный Лут который я использую в каждом видео',
   },
   {
-    index: '03',
+    title: 'Обучение по монтажу',
+    body: 'Научись базе CapCut а также продвинутым эффектам, цепляющим глаз',
+  },
+  {
+    title: 'Комьюнити',
+    body: 'Общайся с творческими ребятами как ты и делись опытом. Получай фидбэк!',
+  },
+  {
     title: 'Полезные материалы',
-    body: 'LUTs, overlays и мои настройки Blackmagic. Забрал и работаешь.',
+    body: 'Звуковые эффекты, секретные шрифты и оверлеи',
   },
   {
-    index: '04',
-    title: 'Разборы',
-    body: 'Смотрю твои ролики по пунктам: кадр, ритм, цвет, звук.',
-  },
-  {
-    index: '05',
-    title: 'Прямые эфиры',
-    body: 'Собираемся вместе: монтируем, грейдим, отвечаю на вопросы.',
+    title: 'Разборы на прямых эфирах',
+    body: 'Смотрю твои ролики по пунктам: цвет, ритм и звук. Собираемся вместе',
   },
 ];
 
 export const BENEFITS_SECTION = {
-  title: 'Что внутри комьюнити',
-  meta: '5 блоков',
+  title: 'Что внутри',
 } as const;
 
 export const COMPARE = {
@@ -184,10 +181,10 @@ export const SHEETS = {
     title: 'Мои покупки',
     emptyTitle: 'Пока покупок нет',
     emptyBody: 'Здесь появятся твои покупки и подписки Pocket Creator.',
-    cta: 'Вступить в комьюнити',
+    cta: 'Вступить',
     /** Shown once a membership exists. */
     activeTitle: 'Подписка Pocket Creator',
-    activeBody: 'Приватное комьюнити, 3 урока, материалы, разборы и эфиры.',
+    activeBody: 'Уроки, GRADA LUT, монтаж, материалы, разборы и комьюнити.',
     activeBadge: 'Активна',
     /** Precedes the formatted expiry date. */
     activeUntil: 'Действует до',
@@ -197,7 +194,7 @@ export const SHEETS = {
     lockedTitle: 'Доступ закрыт',
     lockedBody:
       'Приватное комьюнити откроется сразу после оформления подписки.',
-    lockedCta: 'Вступить в комьюнити',
+    lockedCta: 'Вступить',
     activeTitle: 'Доступ открыт',
     activeBody: 'Ты в приватном Pocket Creator. Заходи и пиши в любое время.',
     activeCta: 'Открыть комьюнити',
