@@ -1,10 +1,9 @@
 /**
  * Pocket Creator design tokens.
  *
- * Values are lifted verbatim from the Claude Design prototype
- * (`Pocket Creator Mini App.dc.html`) so the build stays pixel-faithful.
- * The burgundy ramp is derived from the logo — adjust it here and it
- * propagates everywhere.
+ * Values were lifted verbatim from the original Claude Design prototype so
+ * the build stays pixel-faithful. The burgundy ramp is derived from the
+ * logo — adjust it here and it propagates everywhere.
  */
 
 export const color = {
