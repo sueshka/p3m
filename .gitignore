@@ -1,0 +1,9 @@
+.DS_Store
+**/.DS_Store
+node_modules
+dist
+tsconfig.tsbuildinfo
+.vercel
+.env
+.env.local
+.env*.local

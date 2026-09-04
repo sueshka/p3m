@@ -55,7 +55,15 @@ export async function verifyInitData(
   const secret = await hmac('WebAppData', botToken);
   const computed = toHex(await hmac(secret, dataCheckString));
 
-  if (computed.length !== hash.length || computed !== hash) {
+  // Constant-time compare, matching the webhook and admin handlers.
+  if (computed.length !== hash.length) {
+    return { ok: false, reason: 'bad signature' };
+  }
+  let diff = 0;
+  for (let i = 0; i < computed.length; i++) {
+    diff |= computed.charCodeAt(i) ^ hash.charCodeAt(i);
+  }
+  if (diff !== 0) {
     return { ok: false, reason: 'bad signature' };
   }
 
