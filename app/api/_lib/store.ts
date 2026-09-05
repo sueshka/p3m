@@ -145,6 +145,56 @@ export async function saveConsentRecord(record: ConsentRecord): Promise<void> {
   );
 }
 
+/** Number of chats that blocked the bot. */
+export async function countDeadChats(): Promise<number> {
+  const raw = await kv(['SCARD', DEAD_CHATS]);
+  return typeof raw === 'number' ? raw : 0;
+}
+
+/** How many consent submissions have ever been filed. */
+export async function countConsentLog(): Promise<number> {
+  const raw = await kv(['LLEN', CONSENT_LOG]);
+  return typeof raw === 'number' ? raw : 0;
+}
+
+/**
+ * Counts stored subscriptions, split into active and lapsed.
+ *
+ * SCAN rather than KEYS: KEYS blocks Redis for the whole sweep, which is
+ * fine at ten members and a problem at ten thousand.
+ */
+export async function countSubscriptions(): Promise<{ active: number; expired: number }> {
+  let cursor = '0';
+  let active = 0;
+  let expired = 0;
+  const now = Date.now();
+
+  do {
+    const page = (await kv(['SCAN', cursor, 'MATCH', 'sub:*', 'COUNT', '200'])) as
+      | [string, string[]]
+      | undefined;
+    if (!Array.isArray(page)) break;
+    cursor = String(page[0]);
+    const keys = Array.isArray(page[1]) ? page[1] : [];
+
+    if (keys.length > 0) {
+      const values = (await kv(['MGET', ...keys])) as unknown[];
+      for (const raw of values ?? []) {
+        if (typeof raw !== 'string') continue;
+        try {
+          const sub = JSON.parse(raw) as Subscription;
+          if (new Date(sub.expiresAt).getTime() > now) active++;
+          else expired++;
+        } catch {
+          /* a malformed row should not abort the whole count */
+        }
+      }
+    }
+  } while (cursor !== '0');
+
+  return { active, expired };
+}
+
 /** True when a stored subscription has not yet expired. */
 export function isActive(sub: Subscription | null): boolean {
   if (!sub?.expiresAt) return false;

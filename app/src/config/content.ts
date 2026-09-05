@@ -235,4 +235,5 @@ export const SHEETS = {
 export const NAV = {
   home: 'Главная',
   account: 'Аккаунт',
+  admin: 'Админка',
 } as const;

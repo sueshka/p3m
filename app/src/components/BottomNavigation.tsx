@@ -2,11 +2,13 @@ import { NAV } from '../config/content';
 import { color, glass, gradient, radius, shadow } from '../styles/tokens';
 import { Pressable } from './Pressable';
 
-export type Tab = 'home' | 'account';
+export type Tab = 'home' | 'account' | 'admin';
 
 interface BottomNavigationProps {
   active: Tab;
   onChange: (tab: Tab) => void;
+  /** The admin tab is only drawn for admins; the server still re-checks. */
+  showAdmin?: boolean;
 }
 
 const INACTIVE = '#9B959D';
@@ -56,11 +58,45 @@ function AccountIcon({ tint, active }: { tint: string; active: boolean }) {
   );
 }
 
+function AdminIcon({ tint }: { tint: string }) {
+  // Three sliders: reads as controls without needing a label when collapsed.
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: 18,
+        height: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      }}
+    >
+      {[3, 9, 6].map((knob, i) => (
+        <span key={i} style={{ position: 'relative', height: 2, background: tint, borderRadius: 1 }}>
+          <span
+            style={{
+              position: 'absolute',
+              top: -2,
+              left: knob,
+              width: 5,
+              height: 5,
+              borderRadius: 999,
+              background: tint,
+              border: `1.5px solid ${tint}`,
+              boxSizing: 'border-box',
+            }}
+          />
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /**
  * Floating glass pill navigation. The selected item becomes a solid
- * near-black pill with its label; the other collapses to an icon.
+ * near-black pill with its label; the others collapse to icons.
  */
-export function BottomNavigation({ active, onChange }: BottomNavigationProps) {
+export function BottomNavigation({ active, onChange, showAdmin }: BottomNavigationProps) {
   const isHome = active === 'home';
 
   const activePill = {
@@ -128,12 +164,24 @@ export function BottomNavigation({ active, onChange }: BottomNavigationProps) {
         <Pressable
           onClick={() => onChange('account')}
           aria-label={NAV.account}
-          aria-current={!isHome ? 'page' : undefined}
-          style={!isHome ? activePill : iconOnly}
+          aria-current={active === 'account' ? 'page' : undefined}
+          style={active === 'account' ? activePill : iconOnly}
         >
-          <AccountIcon tint={!isHome ? color.white : INACTIVE} active={!isHome} />
-          {!isHome && NAV.account}
+          <AccountIcon tint={active === 'account' ? color.white : INACTIVE} active={active === 'account'} />
+          {active === 'account' && NAV.account}
         </Pressable>
+
+        {showAdmin && (
+          <Pressable
+            onClick={() => onChange('admin')}
+            aria-label={NAV.admin}
+            aria-current={active === 'admin' ? 'page' : undefined}
+            style={active === 'admin' ? activePill : iconOnly}
+          >
+            <AdminIcon tint={active === 'admin' ? color.white : INACTIVE} />
+            {active === 'admin' && NAV.admin}
+          </Pressable>
+        )}
       </div>
     </nav>
   );

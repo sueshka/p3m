@@ -10,6 +10,8 @@ import { TutorialScreen } from './screens/TutorialScreen';
 import { OverlaysScreen } from './screens/OverlaysScreen';
 import { LutsScreen } from './screens/LutsScreen';
 import { ConsentScreen } from './screens/ConsentScreen';
+import { AdminScreen } from './screens/AdminScreen';
+import { isAdmin } from './lib/admin';
 import { LegalScreen } from './screens/LegalScreen';
 import { LEGAL_DOCS, type LegalDoc } from './config/legal';
 import { fetchMembership } from './lib/membership';
@@ -268,6 +270,8 @@ export default function App() {
           onJoin={join}
           onOpenMaterial={openMaterial}
         />
+      ) : tab === 'admin' ? (
+        <AdminScreen />
       ) : (
         <AccountScreen
           userName={userName}
@@ -288,7 +292,7 @@ export default function App() {
         />
       )}
 
-      <BottomNavigation active={tab} onChange={changeTab} />
+      <BottomNavigation active={tab} onChange={changeTab} showAdmin={isAdmin(user?.id)} />
 
       {tutorial && <TutorialScreen onClose={() => setTutorial(false)} />}
 
