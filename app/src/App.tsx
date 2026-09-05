@@ -21,6 +21,7 @@ import {
   saveConsent,
   syncConsent,
   flushPendingConsent,
+  backfillConsent,
   type ConsentPurpose,
 } from './lib/consent';
 import type { Overlay } from './config/overlays';
@@ -75,8 +76,10 @@ export default function App() {
     const tgUser = getTelegramUser();
     setUser(tgUser);
     setConsented(hasRequiredConsent(loadConsent(tgUser?.id)));
-    // An earlier accept that never reached the server gets another chance.
+    // An earlier accept that never reached the server gets another chance,
+    // as does one given before the server recorded consent at all.
     void flushPendingConsent();
+    void backfillConsent(tgUser?.id);
 
     let cancelled = false;
     fetchMembership().then((state) => {

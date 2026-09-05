@@ -47,7 +47,13 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'method not allowed' }, 405);
   }
 
-  let body: { initData?: string; version?: number; granted?: Record<string, unknown> };
+  let body: {
+    initData?: string;
+    version?: number;
+    granted?: Record<string, unknown>;
+    /** Only for records filed before the server endpoint existed. */
+    acceptedAt?: string;
+  };
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -69,13 +75,33 @@ export default async function handler(req: Request): Promise<Response> {
     granted[purpose] = body.granted?.[purpose] === true;
   }
 
+  const now = new Date();
+
+  /**
+   * Consent given before this endpoint existed lives only in the client's
+   * local storage, and is backfilled on the next launch. Its real date is
+   * worth keeping — but it comes from a client clock, so it is recorded as
+   * a claim (`clientAcceptedAt`, flagged `backfilled`) and never passed off
+   * as something the server witnessed.
+   */
+  const claimed = typeof body.acceptedAt === 'string' ? new Date(body.acceptedAt) : null;
+  const backfilled =
+    claimed !== null &&
+    !Number.isNaN(claimed.getTime()) &&
+    // A date in the future, or older than the app itself, is not credible.
+    claimed.getTime() <= now.getTime() &&
+    claimed.getFullYear() >= 2025;
+
   const record: ConsentRecord = {
     version,
-    acceptedAt: new Date().toISOString(),
+    acceptedAt: now.toISOString(),
     telegramId: check.user.id,
     granted,
     ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
     userAgent: req.headers.get('user-agent') || undefined,
+    ...(backfilled
+      ? { backfilled: true, clientAcceptedAt: claimed.toISOString() }
+      : {}),
   };
 
   try {

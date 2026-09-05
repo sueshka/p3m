@@ -101,8 +101,13 @@ function clearPending(): void {
   }
 }
 
-/** Sends one record. Resolves true only when the server stored it. */
-async function upload(record: ConsentRecord): Promise<boolean> {
+/**
+ * Sends one record. Resolves true only when the server stored it.
+ *
+ * `acceptedAt` is passed only for a backfill: for a fresh accept the server
+ * timestamps it itself, which is the whole point of recording server-side.
+ */
+async function upload(record: ConsentRecord, acceptedAt?: string): Promise<boolean> {
   const initData = tg()?.initData;
   // Outside Telegram there is no verifiable identity, so there is nothing
   // the server would be willing to record.
@@ -116,6 +121,7 @@ async function upload(record: ConsentRecord): Promise<boolean> {
         initData,
         version: record.version,
         granted: record.granted,
+        ...(acceptedAt ? { acceptedAt } : {}),
       }),
     });
     return res.ok;
@@ -131,9 +137,50 @@ async function upload(record: ConsentRecord): Promise<boolean> {
 export async function syncConsent(record: ConsentRecord): Promise<void> {
   if (await upload(record)) {
     clearPending();
+    markSynced(record.userId);
   } else {
     markPending(record);
   }
+}
+
+/**
+ * Marks that this device's stored consent has reached the server, so the
+ * backfill runs once rather than on every launch.
+ */
+const SYNCED_KEY = 'pc_consent_synced';
+
+function markSynced(userId?: number): void {
+  try {
+    localStorage.setItem(`${SYNCED_KEY}_${userId ?? 'anon'}`, String(CONSENT_VERSION));
+  } catch {
+    /* worst case the upload repeats; the server overwrites the same key */
+  }
+}
+
+function isSynced(userId?: number): boolean {
+  try {
+    return localStorage.getItem(`${SYNCED_KEY}_${userId ?? 'anon'}`) === String(CONSENT_VERSION);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Files consent that predates this endpoint.
+ *
+ * People who accepted before the server started recording have their proof
+ * sitting in local storage only. This carries it over on their next visit —
+ * the alternative is asking them to consent again, which is worse for them
+ * and loses the original date.
+ */
+export async function backfillConsent(userId?: number): Promise<void> {
+  if (isSynced(userId)) return;
+  const record = loadConsent(userId);
+  if (!hasRequiredConsent(record) || !record) return;
+
+  // The original timestamp travels with it; the server keeps it as a
+  // claim rather than treating it as its own observation.
+  if (await upload(record, record.acceptedAt)) markSynced(userId);
 }
 
 /** Retries a queued record. Safe to call on every launch. */

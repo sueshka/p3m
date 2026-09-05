@@ -120,6 +120,13 @@ export interface ConsentRecord {
   /** Kept as evidence of where the consent came from. */
   ip?: string;
   userAgent?: string;
+  /**
+   * Set when the record was filed from a client's local storage after the
+   * fact, rather than witnessed here as it happened.
+   */
+  backfilled?: boolean;
+  /** The client's own timestamp — a claim, not server-verified. */
+  clientAcceptedAt?: string;
 }
 
 const consentKey = (telegramId: number | string) => `consent:${telegramId}`;
