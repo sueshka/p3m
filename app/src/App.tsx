@@ -17,6 +17,8 @@ import {
   hasRequiredConsent,
   loadConsent,
   saveConsent,
+  syncConsent,
+  flushPendingConsent,
   type ConsentPurpose,
 } from './lib/consent';
 import type { Overlay } from './config/overlays';
@@ -71,6 +73,8 @@ export default function App() {
     const tgUser = getTelegramUser();
     setUser(tgUser);
     setConsented(hasRequiredConsent(loadConsent(tgUser?.id)));
+    // An earlier accept that never reached the server gets another chance.
+    void flushPendingConsent();
 
     let cancelled = false;
     fetchMembership().then((state) => {
@@ -95,9 +99,12 @@ export default function App() {
   };
 
   const acceptConsent = (granted: Record<ConsentPurpose, boolean>) => {
-    saveConsent(granted, user?.id);
+    const record = saveConsent(granted, user?.id);
     haptic('medium');
     setConsented(true);
+    // Filed in the background: the entry to the app must not wait on, or be
+    // blocked by, the network. A failure leaves it queued for next launch.
+    void syncConsent(record);
   };
 
   const openLegal = (docId?: 'privacy' | 'consent') => {

@@ -2,10 +2,13 @@
  * Consent state, stored per Telegram user.
  *
  * The Kyrgyz Digital Code requires consent to be given per purpose, and
- * the fact and time of consent to be recorded. There is no backend yet,
- * so this persists locally; when a backend exists, mirror these records
- * server-side — local storage is not an auditable record.
+ * the fact and time of consent to be recorded. The auditable record lives
+ * server-side (POST /api/consent, timestamped by the server clock and tied
+ * to a verified Telegram identity); local storage is only a cache, so the
+ * consent screen does not reappear on every launch while the network is
+ * slow or unavailable.
  */
+import { tg } from './telegram';
 
 /** Purposes from the consent document. 1-4 are required, 5 is optional. */
 export const CONSENT_PURPOSES = ['p1', 'p2', 'p3', 'p4', 'p5'] as const;
@@ -73,6 +76,84 @@ export function clearConsent(userId?: number): void {
   } catch {
     /* nothing to do */
   }
+}
+
+/**
+ * Marks whether the record still needs to reach the server. Consent is not
+ * allowed to fail because the network did: the person is let through on the
+ * local record, and the upload is retried on the next launch.
+ */
+const PENDING_KEY = 'pc_consent_pending';
+
+function markPending(record: ConsentRecord): void {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(record));
+  } catch {
+    /* nothing we can do; the next accept will try again */
+  }
+}
+
+function clearPending(): void {
+  try {
+    localStorage.removeItem(PENDING_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Sends one record. Resolves true only when the server stored it. */
+async function upload(record: ConsentRecord): Promise<boolean> {
+  const initData = tg()?.initData;
+  // Outside Telegram there is no verifiable identity, so there is nothing
+  // the server would be willing to record.
+  if (!initData) return false;
+
+  try {
+    const res = await fetch('/api/consent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData,
+        version: record.version,
+        granted: record.granted,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Records consent server-side. Call after saveConsent; it never throws and
+ * never blocks the UI — a failure just leaves the record queued.
+ */
+export async function syncConsent(record: ConsentRecord): Promise<void> {
+  if (await upload(record)) {
+    clearPending();
+  } else {
+    markPending(record);
+  }
+}
+
+/** Retries a queued record. Safe to call on every launch. */
+export async function flushPendingConsent(): Promise<void> {
+  let record: ConsentRecord;
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    if (!raw) return;
+    record = JSON.parse(raw) as ConsentRecord;
+  } catch {
+    clearPending();
+    return;
+  }
+  // A record from a superseded document version is not worth re-filing:
+  // the screen will ask again anyway.
+  if (record.version !== CONSENT_VERSION) {
+    clearPending();
+    return;
+  }
+  if (await upload(record)) clearPending();
 }
 
 /** True when every required purpose has been agreed to. */

@@ -65,6 +65,86 @@ export async function clearSubscription(telegramId: number | string): Promise<vo
   await kv(['DEL', key(telegramId)]);
 }
 
+/**
+ * Bot subscribers, for broadcasts.
+ *
+ * Telegram does not hand out the list of people who started a bot: it can
+ * only be accumulated as they arrive, so every `/start` is recorded here.
+ * Anyone who pressed Start before this existed is unreachable.
+ *
+ * A set, so repeated `/start` from the same person stores one entry.
+ */
+const CHATS = 'bot:chats';
+/** Chats that blocked the bot. Kept out of CHATS so sends are not wasted. */
+const DEAD_CHATS = 'bot:chats:dead';
+
+export async function rememberChat(chatId: number | string): Promise<void> {
+  await kv(['SADD', CHATS, String(chatId)]);
+  // Someone who blocked the bot and came back is reachable again.
+  await kv(['SREM', DEAD_CHATS, String(chatId)]);
+}
+
+/** Marks a chat unreachable — Telegram answered 403 (bot blocked). */
+export async function forgetChat(chatId: number | string): Promise<void> {
+  await kv(['SREM', CHATS, String(chatId)]);
+  await kv(['SADD', DEAD_CHATS, String(chatId)]);
+}
+
+export async function listChats(): Promise<string[]> {
+  const raw = await kv(['SMEMBERS', CHATS]);
+  return Array.isArray(raw) ? raw.map(String) : [];
+}
+
+export async function countChats(): Promise<number> {
+  const raw = await kv(['SCARD', CHATS]);
+  return typeof raw === 'number' ? raw : 0;
+}
+
+/**
+ * Consent records.
+ *
+ * The Digital Code requires the fact and time of consent to be provable, so
+ * two things are stored: `consent:<id>` holds what the person currently
+ * agreed to, and `consent:log` keeps every submission ever made. Withdrawal
+ * overwrites the first but must never erase the second — proof that consent
+ * once existed is exactly what an audit asks for.
+ */
+export interface ConsentRecord {
+  /** Document revision the person agreed to. */
+  version: number;
+  /** ISO timestamp, taken from the server clock, not the client's. */
+  acceptedAt: string;
+  telegramId: number;
+  /** Purpose id -> agreed. */
+  granted: Record<string, boolean>;
+  /** Kept as evidence of where the consent came from. */
+  ip?: string;
+  userAgent?: string;
+}
+
+const consentKey = (telegramId: number | string) => `consent:${telegramId}`;
+const CONSENT_LOG = 'consent:log';
+
+export async function getConsentRecord(telegramId: number): Promise<ConsentRecord | null> {
+  const raw = await kv(['GET', consentKey(telegramId)]);
+  if (typeof raw !== 'string') return null;
+  try {
+    return JSON.parse(raw) as ConsentRecord;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveConsentRecord(record: ConsentRecord): Promise<void> {
+  const payload = JSON.stringify(record);
+  await kv(['SET', consentKey(record.telegramId), payload]);
+  // Append-only history. A failure here must not lose the record itself,
+  // but it does mean the audit trail has a gap, so it is worth shouting about.
+  await kv(['RPUSH', CONSENT_LOG, payload]).catch((err) =>
+    console.error('consent log append failed', err),
+  );
+}
+
 /** True when a stored subscription has not yet expired. */
 export function isActive(sub: Subscription | null): boolean {
   if (!sub?.expiresAt) return false;

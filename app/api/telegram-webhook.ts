@@ -15,12 +15,19 @@
  * и взять message.video_note.file_id — он живёт вечно для этого бота.
  * Переменная не задана — бот шлёт только текст, как раньше.
  */
+import { rememberChat, forgetChat } from './_lib/store';
+
 export const config = { runtime: 'edge' };
 
 interface Update {
   message?: {
     chat?: { id?: number };
     text?: string;
+  };
+  /** Sent when someone blocks or unblocks the bot. */
+  my_chat_member?: {
+    chat?: { id?: number };
+    new_chat_member?: { status?: string };
   };
 }
 
@@ -52,9 +59,43 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response('ok', { status: 200 });
   }
 
+  // Telegram reports a block or an unblock here rather than as a message,
+  // so the list prunes itself instead of accumulating dead chats until the
+  // next broadcast trips over them.
+  const membership = update.my_chat_member;
+  if (membership?.chat?.id) {
+    const status = membership.new_chat_member?.status;
+    try {
+      if (status === 'kicked' || status === 'left') {
+        await forgetChat(membership.chat.id);
+      } else if (status === 'member') {
+        await rememberChat(membership.chat.id);
+      }
+    } catch (err) {
+      console.error('membership update failed', err);
+    }
+    return new Response('ok', { status: 200 });
+  }
+
   const chatId = update.message?.chat?.id;
   const text = update.message?.text ?? '';
-  if (!chatId || !text.startsWith('/start')) {
+  if (!chatId) {
+    return new Response('ok', { status: 200 });
+  }
+
+  // Telegram never gives out the subscriber list, so it has to be built up
+  // one arrival at a time — anyone not recorded here can never be reached by
+  // a broadcast. This sits above the /start check on purpose: someone who
+  // just writes to the bot is as reachable as someone who pressed Start.
+  // Storage trouble must not cost the person their welcome, so a failure is
+  // logged and the reply still goes out.
+  try {
+    await rememberChat(chatId);
+  } catch (err) {
+    console.error('rememberChat failed', err);
+  }
+
+  if (!text.startsWith('/start')) {
     return new Response('ok', { status: 200 });
   }
 

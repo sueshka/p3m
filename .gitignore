@@ -8,4 +8,5 @@ tsconfig.tsbuildinfo
 .env.local
 .env*.local
 SECURITY-REVIEW.md
+NOTES.md
 
