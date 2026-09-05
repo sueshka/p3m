@@ -7,6 +7,13 @@
  *
  * Register it once (TELEGRAM_WEBHOOK_SECRET is any random string):
  *   curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<host>/api/telegram-webhook&secret_token=<SECRET>"
+ *
+ * Кружок (TELEGRAM_START_VIDEO_NOTE) — это file_id уже загруженного в Telegram
+ * видеосообщения. Получить его: временно снять вебхук, отправить кружок боту в
+ * личку, затем
+ *   curl "https://api.telegram.org/bot<TOKEN>/getUpdates"
+ * и взять message.video_note.file_id — он живёт вечно для этого бота.
+ * Переменная не задана — бот шлёт только текст, как раньше.
  */
 export const config = { runtime: 'edge' };
 
@@ -49,6 +56,26 @@ export default async function handler(req: Request): Promise<Response> {
   const text = update.message?.text ?? '';
   if (!chatId || !text.startsWith('/start')) {
     return new Response('ok', { status: 200 });
+  }
+
+  // Кружок идёт первым сообщением, текст с кнопкой — вторым.
+  // В env кладётся file_id уже загруженного в Telegram кружка (см. комментарий
+  // у START_VIDEO_NOTE ниже). Если его нет — просто шлём текст.
+  const videoNote = process.env.TELEGRAM_START_VIDEO_NOTE;
+  if (videoNote) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendVideoNote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, video_note: videoNote }),
+      });
+      // Кружок не должен блокировать приветствие: логируем и идём дальше.
+      if (!res.ok) {
+        console.error('sendVideoNote rejected', res.status, await res.text());
+      }
+    } catch (err) {
+      console.error('sendVideoNote failed', err);
+    }
   }
 
   try {
