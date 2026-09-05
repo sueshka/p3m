@@ -15,6 +15,8 @@ export interface TelegramUser {
   first_name?: string;
   last_name?: string;
   username?: string;
+  /** Listed in consent purpose p1 alongside the name fields. */
+  language_code?: string;
 }
 
 const MAX_AGE_SECONDS = 24 * 60 * 60;

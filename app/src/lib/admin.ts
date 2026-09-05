@@ -35,6 +35,32 @@ export async function fetchAdminStats(): Promise<AdminStats | null> {
   }
 }
 
+export interface AdminUser {
+  telegramId: number;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  languageCode?: string;
+  firstSeen: string;
+  lastSeen: string;
+  visits: number;
+  member: boolean;
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[] | null> {
+  const initData = tg()?.initData;
+  if (!initData) return null;
+
+  try {
+    const res = await fetch(`/api/admin-users?initData=${encodeURIComponent(initData)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { users?: AdminUser[] };
+    return data.users ?? [];
+  } catch {
+    return null;
+  }
+}
+
 export interface BroadcastProgress {
   sent: number;
   failed: number;

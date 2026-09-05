@@ -1,5 +1,10 @@
 import { verifyInitData } from './_lib/telegram-auth';
-import { getConsentRecord, saveConsentRecord, type ConsentRecord } from './_lib/store';
+import {
+  getConsentRecord,
+  saveConsentRecord,
+  touchProfile,
+  type ConsentRecord,
+} from './_lib/store';
 
 /**
  * POST /api/consent — records that this user agreed, and to what.
@@ -78,6 +83,15 @@ export default async function handler(req: Request): Promise<Response> {
   } catch (err) {
     console.error('consent write failed', err);
     return json({ error: 'storage unavailable' }, 503);
+  }
+
+  // The profile is written only once consent is on record — storing names
+  // for someone who declined would be collecting exactly what they refused.
+  // A failure here is not worth rejecting the consent itself over.
+  try {
+    await touchProfile(check.user, check.user.language_code);
+  } catch (err) {
+    console.error('profile write failed', err);
   }
 
   return json({ ok: true, acceptedAt: record.acceptedAt });

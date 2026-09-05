@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import {
   broadcast,
   fetchAdminStats,
+  fetchAdminUsers,
   type AdminStats,
+  type AdminUser,
   type BroadcastProgress,
 } from '../lib/admin';
 import { haptic } from '../lib/telegram';
@@ -50,6 +52,84 @@ function Stat({ value, label, tone }: { value: number | null; label: string; ton
   );
 }
 
+/** dd.mm, or dd.mm.yy when it is not this year. */
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const now = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return d.getFullYear() === now.getFullYear()
+    ? `${day}.${month}`
+    : `${day}.${month}.${String(d.getFullYear()).slice(2)}`;
+}
+
+function UserRow({ user }: { user: AdminUser }) {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени';
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 12px',
+        background: color.white,
+        borderRadius: radius.md,
+      }}
+    >
+      <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {name}
+          {user.member && (
+            <span
+              style={{
+                marginLeft: 6,
+                fontSize: 9.5,
+                fontWeight: 700,
+                padding: '2px 6px',
+                borderRadius: radius.pill,
+                background: color.freeSurface,
+                color: color.freeInk,
+                verticalAlign: 'middle',
+              }}
+            >
+              PRO
+            </span>
+          )}
+        </div>
+        <div
+          style={{
+            fontSize: 11.5,
+            color: color.faint,
+            fontFamily: font.mono,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {user.username ? `@${user.username}` : user.telegramId}
+        </div>
+      </div>
+
+      <div style={{ flex: '0 0 auto', textAlign: 'right' }}>
+        <div style={{ fontSize: 12, color: color.inkSoft }}>{shortDate(user.lastSeen)}</div>
+        <div style={{ fontSize: 10.5, color: color.hairline, fontFamily: font.mono }}>
+          {user.visits}×
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type SendState =
   | { phase: 'idle' }
   /** Two taps to send: there is no way to un-send a broadcast. */
@@ -59,14 +139,17 @@ type SendState =
 
 export function AdminScreen() {
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const [showUsers, setShowUsers] = useState(false);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [send, setSend] = useState<SendState>({ phase: 'idle' });
 
   const loadStats = () => {
     setLoading(true);
-    fetchAdminStats().then((s) => {
+    Promise.all([fetchAdminStats(), fetchAdminUsers()]).then(([s, u]) => {
       setStats(s);
+      setUsers(u);
       setLoading(false);
     });
   };
@@ -150,6 +233,39 @@ export function AdminScreen() {
             </div>
           </div>
         )}
+      </section>
+
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>
+            Люди{users ? ` · ${users.length}` : ''}
+          </h2>
+          {users && users.length > 0 && (
+            <Pressable
+              onClick={() => {
+                haptic('light');
+                setShowUsers((v) => !v);
+              }}
+              style={{ fontSize: 12.5, fontWeight: 600, color: color.burgundy }}
+            >
+              {showUsers ? 'Свернуть' : 'Показать'}
+            </Pressable>
+          )}
+        </div>
+
+        {users === null && !loading ? (
+          <p style={{ margin: 0, fontSize: 13, color: color.faint }}>Не удалось загрузить.</p>
+        ) : users && users.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 13, color: color.faint }}>
+            Пока никто не заходил после согласия.
+          </p>
+        ) : showUsers && users ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {users.map((u) => (
+              <UserRow key={u.telegramId} user={u} />
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

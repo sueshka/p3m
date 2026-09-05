@@ -145,6 +145,94 @@ export async function saveConsentRecord(record: ConsentRecord): Promise<void> {
   );
 }
 
+/**
+ * User profiles.
+ *
+ * The consent document (purpose p1) names exactly these fields — Telegram
+ * ID, profile name, @username, language — so this stores those and nothing
+ * more. `lastSeen` is not decoration: the same document promises deletion
+ * one year after the last visit, and that cannot be honoured without
+ * knowing when the last visit was.
+ */
+export interface Profile {
+  telegramId: number;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  languageCode?: string;
+  /** ISO date of the first recorded visit. */
+  firstSeen: string;
+  /** ISO date of the most recent visit; drives the retention window. */
+  lastSeen: string;
+  visits: number;
+}
+
+const profileKey = (telegramId: number | string) => `user:${telegramId}`;
+
+export async function getProfile(telegramId: number): Promise<Profile | null> {
+  const raw = await kv(['GET', profileKey(telegramId)]);
+  if (typeof raw !== 'string') return null;
+  try {
+    return JSON.parse(raw) as Profile;
+  } catch {
+    return null;
+  }
+}
+
+/** Records a visit, creating the profile on first sight. */
+export async function touchProfile(
+  user: { id: number; first_name?: string; last_name?: string; username?: string },
+  languageCode?: string,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const existing = await getProfile(user.id);
+
+  const profile: Profile = {
+    telegramId: user.id,
+    // Names are refreshed each visit: people rename themselves, and a stale
+    // @username is worse than none when you go looking for someone.
+    firstName: user.first_name,
+    lastName: user.last_name,
+    username: user.username,
+    languageCode: languageCode ?? existing?.languageCode,
+    firstSeen: existing?.firstSeen ?? now,
+    lastSeen: now,
+    visits: (existing?.visits ?? 0) + 1,
+  };
+
+  await kv(['SET', profileKey(user.id), JSON.stringify(profile)]);
+}
+
+/** Every stored profile, most recently seen first. */
+export async function listProfiles(limit = 200): Promise<Profile[]> {
+  let cursor = '0';
+  const profiles: Profile[] = [];
+
+  do {
+    const page = (await kv(['SCAN', cursor, 'MATCH', 'user:*', 'COUNT', '200'])) as
+      | [string, string[]]
+      | undefined;
+    if (!Array.isArray(page)) break;
+    cursor = String(page[0]);
+    const keys = Array.isArray(page[1]) ? page[1] : [];
+
+    if (keys.length > 0) {
+      const values = (await kv(['MGET', ...keys])) as unknown[];
+      for (const raw of values ?? []) {
+        if (typeof raw !== 'string') continue;
+        try {
+          profiles.push(JSON.parse(raw) as Profile);
+        } catch {
+          /* skip a malformed row rather than lose the whole page */
+        }
+      }
+    }
+  } while (cursor !== '0');
+
+  profiles.sort((a, b) => (a.lastSeen < b.lastSeen ? 1 : -1));
+  return profiles.slice(0, limit);
+}
+
 /** Number of chats that blocked the bot. */
 export async function countDeadChats(): Promise<number> {
   const raw = await kv(['SCARD', DEAD_CHATS]);

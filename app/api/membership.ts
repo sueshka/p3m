@@ -1,5 +1,11 @@
 import { verifyInitData } from './_lib/telegram-auth';
-import { getSubscription, setSubscription, isActive } from './_lib/store';
+import {
+  getSubscription,
+  setSubscription,
+  isActive,
+  getProfile,
+  touchProfile,
+} from './_lib/store';
 import { fetchExpiry } from './_lib/tribute';
 
 /**
@@ -33,6 +39,17 @@ export default async function handler(req: Request): Promise<Response> {
   const check = await verifyInitData(initData, process.env.TELEGRAM_BOT_TOKEN ?? '');
   if (!check.ok) {
     return json({ isMember: false, error: check.reason }, 401);
+  }
+
+  // Every open passes through here, so this is where `lastSeen` stays
+  // current — without it the retention clock would freeze at the date of
+  // consent. Only refreshes an existing profile; one is created at consent.
+  try {
+    if (await getProfile(check.user.id)) {
+      await touchProfile(check.user, check.user.language_code);
+    }
+  } catch (err) {
+    console.error('profile touch failed', err);
   }
 
   try {
